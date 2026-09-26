@@ -1,0 +1,14 @@
+target/
+.git/
+.claude/
+.specify/
+specs/
+*.md
+.env
+.env.*
+!.env.example
+.idea/
+.vscode/
+*.iml
+*.log
+.DS_Store
