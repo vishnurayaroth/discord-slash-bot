@@ -375,9 +375,7 @@ library. The JDK covers them (`java.security`, `java.net.http`, `System.Logger`)
 applied by one idempotent script at start-up. Tests use a stub built on the JDK's
 `com.sun.net.httpserver.HttpServer` for Discord.
 
-**Risks to check in the first setup task (unverified):** Testcontainers 2.0.5 with your Docker
-Engine 28.4 (fallback: tests read a `TEST_DATABASE_URL` pointing at a local `docker run postgres`);
-JUnit 6.1 with surefire 3.6.0; the existing pom pins older compiler and WAR plugins to update.
+**Risks checked (2026-09-27):** Testcontainers 2.0.5 works with Docker Engine 28.4 and JUnit 6.1.3 works with surefire 3.6.0 (the persistence tests run against a real Postgres). The existing pom's older compiler and WAR plugins were updated in task T001.
 
 ---
 
@@ -420,8 +418,19 @@ rare, and R1 measures the first-request cost.
 
 ## Remaining unknowns (none block planning)
 
-- Cold-database latency on the real host (R1).
-- Whether Render's free plan offers Singapore, and whether Render health checks stop spin-down (we
-  do not rely on either).
-- Discord's exact behavior for an early edit of the original reply (R5) and `allowed_mentions` (R13).
-- Testcontainers with Docker 28.4, JUnit 6 with surefire, INFO logging in the container (R14, R12).
+Status after implementation (updated 2026-09-27):
+
+- **Cold-database latency on the real host (R1):** still open. Needs the deployed service and Neon (tasks
+  T012 and T013). `Timing.RECORD_DEADLINE` stays at the provisional 2.5 s until then.
+- **Render's free plan offering Singapore, and whether Render health checks stop spin-down:** still open
+  (needs the Render account). The design relies on neither.
+- **Discord's exact behavior for an early edit of the original reply (R5), and `allowed_mentions` (R13):**
+  still open (needs a real Discord server). The retry policy already treats an early 404 as retryable.
+- **Testcontainers 2.0.5 with Docker Engine 28.4, and JUnit 6.1 with surefire 3.6.0 (R14):** RESOLVED. Both
+  work on the development machine; the persistence tests run against a real Postgres.
+- **INFO logging in the container (R12):** RESOLVED locally. `System.Logger` lines appear in `docker logs`
+  under Tomcat. Whether they appear in Render's log view is confirmed at deploy time (task T008).
+- **HikariCP `keepaliveTime` (R4, R8):** RESOLVED. Its default in HikariCP 7 is 2 minutes, not off; it is now
+  set to 0 explicitly and asserted by `DatabaseConfigTest`.
+- **PostgreSQL driver under Tomcat (new):** RESOLVED. The driver class must be named in the pool
+  configuration (`No suitable driver` otherwise); asserted by `DatabaseConfigTest`.

@@ -151,3 +151,35 @@ unavailable."; markup in the reply text is shown escaped.
 | Item | Kind | Reason | Done when |
 |---|---|---|---|
 | T095 run the US6 quickstart rows on the deployment: disable `/report` and see "currently unavailable" in Discord, change the reply text, save an empty text, POST without a token | Deferred task / skipped live test | Needs the live deployment and a Discord server | Quickstart US6 rows pass (US6 scenarios 1 to 5) |
+
+## Phase 9: Polish and cross-cutting
+
+Done: README.md (T096) with the "Testing it" section and known limits; a full-suite run as completion evidence
+(165 tests, 0 failures, 0 errors); the local part of the secrets search (T099); the local part of the research
+update (T100); the spike probe for T010 prepared on the local branch `spike/db-probe` (never merged).
+
+| Item | Kind | Reason | Done when |
+|---|---|---|---|
+| T097 `AI_NOTES.md` | Draft ready, maintainer owns it | Only the maintainer can write the honest first-person account | The parts marked "your words" are rewritten and the draft banner is removed |
+| T098 full quickstart validation table on the deployed service, including the SC-001 timing row | Deferred task / skipped live test | Needs the deployment, Discord and Neon | Every row passes; numbers recorded in `research.md` |
+| T099 secrets search of the Render logs | Deferred task / skipped live test | Needs the Render deployment | Zero occurrences of the bot token, public key and mirror address in Render's logs (SC-007) |
+| T100 R1 results and the live-only unknowns in `research.md` | Deferred task | Needs T012/T013 and live services | R1 "Results" filled in; remaining unknowns resolved |
+| T101 confirm the submission list | Deferred task | Maintainer's final check | Public URL reachable, README, `.env.example`, test instructions with the throwaway admin login, AI context files, `AI_NOTES.md` |
+
+## What remains for the maintainer, in a sensible order
+
+All code tasks are complete. What is left needs your accounts. The tasks are still unchecked in `tasks.md`,
+each marked "deferred".
+
+1. **Deploy the skeleton and keep it warm:** T007 (Render service), T008 (deploy, check `/health` and the log
+   view), T009 (UptimeRobot).
+2. **Measure the database (optional but recommended before relying on 2.5 s):** push the local branch
+   `spike/db-probe` to GitHub, deploy it as a second Render branch or temporarily, then T011 (Neon variables,
+   confirm Neon goes idle), T012 (the R1 protocol), T013 (record results and adjust `Timing.RECORD_DEADLINE`
+   if needed), T014 (remove the probe).
+3. **Go live with the real code:** T038 (set the variables, save the Interactions Endpoint URL in Discord,
+   curl a forged request), then create the admin hash (quickstart, "Create the admin password hash") and set
+   `ADMIN_*` (T077).
+4. **Live checks:** T050 (commands), T088 (Connect page), T095 (Commands page), T058 (outage and restart).
+5. **Finish:** T098 (full validation table and the timing row), T099 (Render log secrets check), T100 (R1
+   results), T097 (rewrite `AI_NOTES.md`), T101 (final submission list), then push.
