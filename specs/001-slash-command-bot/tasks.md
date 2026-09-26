@@ -151,17 +151,17 @@ Single Maven module, Java packages under `src/main/java/com/example/discordbot/<
 
 ### Tests for User Story 3 (REQUIRED - Principle II) ⚠️
 
-- [ ] T051 [P] [US3] Write `src/test/java/com/example/discordbot/jobs/RetryPolicyTest.java`: delay sequence and cap for `mirror`/`post` and for `reply`, jitter within ±20%, 20-attempt limit, `retry_after` respected (the larger value wins), permanent on non-429 4xx, `reply` stops 30 s before token expiry with "follow-up window expired" (research.md R5).
-- [ ] T052 [P] [US3] Write `src/test/java/com/example/discordbot/jobs/RetrySchedulerTest.java` with a fake clock and stub client: a mirror that fails twice then succeeds ends succeeded with attempts recorded (SC-004); exhausting the limit marks it failed with the last error; a new scheduler instance reading pending rows reschedules them (FR-016); an idle scheduler makes zero store queries (research.md R4).
-- [ ] T053 [P] [US3] Write `src/test/java/com/example/discordbot/persistence/ActionRecoveryTest.java` (Testcontainers): the recovery query returns only `pending` actions and includes their interaction token expiry.
+- [X] T051 [P] [US3] Write `src/test/java/com/example/discordbot/jobs/RetryPolicyTest.java`: delay sequence and cap for `mirror`/`post` and for `reply`, jitter within ±20%, 20-attempt limit, `retry_after` respected (the larger value wins), permanent on non-429 4xx, `reply` stops 30 s before token expiry with "follow-up window expired" (research.md R5).
+- [X] T052 [P] [US3] Write `src/test/java/com/example/discordbot/jobs/RetrySchedulerTest.java` with a fake clock and stub client: a mirror that fails twice then succeeds ends succeeded with attempts recorded (SC-004); exhausting the limit marks it failed with the last error; a new scheduler instance reading pending rows reschedules them (FR-016); an idle scheduler makes zero store queries (research.md R4).
+- [X] T053 [P] [US3] Write `src/test/java/com/example/discordbot/persistence/ActionRecoveryTest.java` (Testcontainers): the recovery query returns only `pending` actions and includes their interaction token expiry.
 
 ### Implementation for User Story 3
 
-- [ ] T054 [US3] Create `src/main/java/com/example/discordbot/jobs/RetryPolicy.java`: pure functions for next delay, permanent versus retryable, and expiry, using `Timing`. Makes T051 pass.
-- [ ] T055 [US3] Create `src/main/java/com/example/discordbot/jobs/RetryScheduler.java`: in-memory timers on a small scheduled executor (2 threads), schedule the next attempt after a retryable failure, mark `failed` at the limit or token expiry, and run one recovery scan at start-up. No periodic polling. Makes T052 pass.
-- [ ] T056 [US3] Update `src/main/java/com/example/discordbot/jobs/ActionRunner.java` and `src/main/java/com/example/discordbot/persistence/ActionStore.java`: record `attempts`, `next_attempt_at`, and sanitized `last_error`, and set `updated_at` on every update; add the pending-actions recovery query (makes T053 pass); hand retryable failures to the scheduler. Update `src/main/java/com/example/discordbot/config/AppLifecycle.java` to start the recovery scan once the schema is ready.
-- [ ] T057 [US3] Run `mvn -Dtest=RetryPolicyTest,RetrySchedulerTest,ActionRecoveryTest,ActionRunnerTest test` until green (tests are under `src/test/java/com/example/discordbot/`).
-- [ ] T058 [US3] **[Maintainer]** Run the US3 rows of the quickstart validation table: unreachable mirror then restore, and a restart right after a command. Steps are in `specs/001-slash-command-bot/quickstart.md`.
+- [X] T054 [US3] Create `src/main/java/com/example/discordbot/jobs/RetryPolicy.java`: pure functions for next delay, permanent versus retryable, and expiry, using `Timing`. Makes T051 pass.
+- [X] T055 [US3] Create `src/main/java/com/example/discordbot/jobs/RetryScheduler.java`: in-memory timers on a small scheduled executor (2 threads), schedule the next attempt after a retryable failure, mark `failed` at the limit or token expiry, and run one recovery scan at start-up. No periodic polling. Makes T052 pass.
+- [X] T056 [US3] Update `src/main/java/com/example/discordbot/jobs/ActionRunner.java` and `src/main/java/com/example/discordbot/persistence/ActionStore.java`: record `attempts`, `next_attempt_at`, and sanitized `last_error`, and set `updated_at` on every update; add the pending-actions recovery query (makes T053 pass); hand retryable failures to the scheduler. Update `src/main/java/com/example/discordbot/config/AppLifecycle.java` to start the recovery scan once the schema is ready.
+- [X] T057 [US3] Run `mvn -Dtest=RetryPolicyTest,RetrySchedulerTest,ActionRecoveryTest,ActionRunnerTest test` until green (tests are under `src/test/java/com/example/discordbot/`).
+- [ ] T058 [US3] **[Maintainer]** Run the US3 rows of the quickstart validation table: unreachable mirror then restore, and a restart right after a command. Steps are in `specs/001-slash-command-bot/quickstart.md`. (deferred: needs maintainer)
 
 **Checkpoint**: Stories 1, 2, and 3 work; nothing accepted is lost.
 

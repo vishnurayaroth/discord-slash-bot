@@ -73,3 +73,20 @@ added the real `ActionDispatcher`, `ActionRunner`, `CommandRules` and the wiring
 |---|---|---|---|
 | T050 live run of `/status`, `/report`, and `/report ... urgent` in a real Discord server, including the early-edit race and `allowed_mentions` behavior | Deferred task / skipped live test | Needs Discord, Render and Neon accounts | Quickstart US1 rows pass; results recorded in research R5 and R13 |
 | Interim setup (register commands with curl, insert the connection row) | Manual steps | Needs the bot token and database access; documented in `quickstart.md` | Commands visible in Discord; a `server_connection` row exists |
+
+## Phase 5: User Story 3 (nothing lost when a downstream channel or the service hiccups)
+
+Automated tests written and run: 23, all passing (RetryPolicyTest 10, RetrySchedulerTest 4, ActionRecoveryTest 3,
+ActionRunnerTest 6 re-run with the new wiring). They cover the exact delay sequences (10 s doubling to 300 s;
+2 s doubling to 120 s), the plus or minus 20% jitter bound (worst case 360 s, inside the 10-minute recovery
+target), the 20-attempt limit, `retry_after` handling, permanent failures, the early-404 rule for replies, the
+30-second margin before a token expires, a mirror that fails twice then recovers (attempts recorded), exhaustion
+ending as a failed action with a fixed reason, a brand-new scheduler finishing pending work after a "restart",
+and an idle scheduler making zero database queries.
+
+Implementation note: the pending-actions recovery query (`ActionStore.pending()`) and the `updated_at` handling
+were already built in Phase 4; this phase added `RetryPolicy`, `RetryScheduler` and the wiring in `AppLifecycle`.
+
+| Item | Kind | Reason | Done when |
+|---|---|---|---|
+| T058 live check: make the second channel unreachable (temporarily change the address), run a command, restore it; restart the service right after a command | Deferred task / skipped live test | Needs the live deployment and Discord | Reply still arrives, mirror shows pending with attempts, then is delivered; a pending notification survives a restart (quickstart US3 rows) |

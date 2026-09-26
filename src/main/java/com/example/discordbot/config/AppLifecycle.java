@@ -6,6 +6,8 @@ import com.example.discordbot.interactions.InteractionHandler;
 import com.example.discordbot.interactions.RecordGate;
 import com.example.discordbot.jobs.ActionDispatcher;
 import com.example.discordbot.jobs.ActionRunner;
+import com.example.discordbot.jobs.RetryPolicy;
+import com.example.discordbot.jobs.RetryScheduler;
 import com.example.discordbot.persistence.ActionStore;
 import com.example.discordbot.persistence.CommandConfigStore;
 import com.example.discordbot.persistence.Database;
@@ -66,8 +68,13 @@ public class AppLifecycle implements ServletContextListener {
         jobExecutor = new ScheduledThreadPoolExecutor(4, daemonThreads("actions"));
         jobExecutor.setRemoveOnCancelPolicy(true);
         ActionRunner runner = new ActionRunner(actions, interactions, connections, discord, config,
-                ActionRunner.simpleHandler(), clock);
+                new RetryPolicy(), clock);
         ActionDispatcher dispatcher = new ActionDispatcher(actions, runner, jobExecutor, Timing.FIRST_REPLY_DELAY);
+        // Retries are in-memory timers; one recovery scan at start-up finishes work accepted before a
+        // restart. No periodic polling, so an idle service lets Neon sleep (research.md R4, R5).
+        RetryScheduler retries = new RetryScheduler(actions, runner, jobExecutor, clock);
+        runner.setRetrier(retries);
+        retries.recoverWhenReady(database::schemaReady);
 
         SignatureVerifier verifier = new SignatureVerifier(config.publicKeyHex(), clock);
         InteractionHandler handler = new InteractionHandler(verifier, gate, new CommandRules(), dispatcher);
