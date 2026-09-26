@@ -38,6 +38,33 @@
       <artifactId>HikariCP</artifactId>
       <version>7.1.0</version>
     </dependency>
+    <!-- JSON: parse Discord payloads and build responses (the JDK has no JSON parser) -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.22.3</version>
+    </dependency>
+
+    <!-- Tests -->
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>6.1.3</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- Real Postgres for persistence tests (unique constraints, ON CONFLICT, recovery query) -->
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers-postgresql</artifactId>
+      <version>2.0.5</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers-junit-jupiter</artifactId>
+      <version>2.0.5</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>

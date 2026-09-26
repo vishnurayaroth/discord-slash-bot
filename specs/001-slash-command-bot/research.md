@@ -195,7 +195,7 @@ query. Neon's 5-minute suspend is fixed on the free plan, so it cannot be tuned.
 **Things that would silently keep the database awake, and must be avoided:**
 1. A connection pool that refills itself. HikariCP's housekeeper keeps the pool at `minimumIdle`
    (default: the maximum size), reopening connections after Neon drops them, which wakes the
-   database again. Fix: `minimumIdle = 0`, short `idleTimeout` (60 s), no `keepaliveTime`.
+   database again. Fix: `minimumIdle = 0`, short `idleTimeout` (60 s), and `keepaliveTime` explicitly 0 (HikariCP 7 defaults to 2 minutes; DatabaseConfigTest guards it).
    *(Behavior from HikariCP's documented defaults; confirm in the spike by watching the Neon console
    go idle. Unverified here.)*
 2. A retry worker that polls the database on a timer. Fix: retries are scheduled in memory (R5),
@@ -276,7 +276,7 @@ inside SC-001's 10 seconds on the first attempt.
 ## R8. Connection pool settings
 
 **Decision.** HikariCP, maximum 4 connections, `minimumIdle = 0`, `idleTimeout` 60 s, `maxLifetime`
-10 minutes, `connectionTimeout` 1.5 s on the request path, no `keepaliveTime`. Direct Neon endpoint
+10 minutes, `connectionTimeout` 1.5 s on the request path, `keepaliveTime` explicitly 0 (HikariCP 7 defaults to 2 minutes), `initializationFailTimeout` -1 so start-up never touches a sleeping database. Direct Neon endpoint
 (not pooled), `sslmode=require`, and `channelBinding=require` with pgjdbc 42.7.13. Credentials are
 separate variables, not embedded in the URL.
 

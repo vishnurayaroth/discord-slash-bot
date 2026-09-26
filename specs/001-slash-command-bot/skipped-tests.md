@@ -25,3 +25,20 @@ Automated tests defined for this phase: none.
 Verified locally in this phase (T006): the Docker image builds; `GET` and `HEAD /health` return 200;
 the start-up INFO line appears in `docker logs`; Tomcat's thread limit and the JVM flags are applied.
 Not yet verified: the same on Render's free instance (T008).
+
+## Phase 2: Foundational
+
+Automated tests written and run: 40, all passing (AppConfigTest, DatabaseConfigTest, SignatureVerifierTest,
+InteractionParseTest, ResponsesTest, DiscordClientTest with a JDK HttpServer stub, SmokeDatabaseTest and
+SchemaTest on a real Postgres through Testcontainers).
+
+Skipped tests: none. Every Phase 2 test runs locally without the maintainer's accounts.
+
+Deferred tasks: none in this phase. One dependency note: T016 (`Timing`) and T022 (`Database`) depend on T013
+(the recorded cold-database measurement). Both are done with the provisional 2.5 s record deadline; the value
+in `Timing.RECORD_DEADLINE` is revisited when T013 is completed.
+
+Findings worth knowing:
+- Testcontainers 2.0.5 works with Docker 28.4 on this machine (was an unverified risk in research R14).
+- `DatabaseConfigTest` caught that HikariCP 7's default `keepaliveTime` is 2 minutes, not 0. It is now set to 0
+  explicitly and research R4 and R8 were corrected.
