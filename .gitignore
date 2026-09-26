@@ -1,0 +1,19 @@
+# Build output
+target/
+
+# Secrets: never commit these. Commit only .env.example
+.env
+.env.*
+!.env.example
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+# Logs and OS files
+*.log
+.DS_Store

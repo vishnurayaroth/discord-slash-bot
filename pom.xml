@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.example.discordbot</groupId>
+  <artifactId>discord-bot</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <packaging>war</packaging>
+
+  <name>discord-bot</name>
+  <description>Discord slash-command bot with an admin dashboard (Servlets + JSP on Tomcat 10.1)</description>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <!-- Java 17: has built-in Ed25519 (needed to verify Discord signatures) -->
+    <maven.compiler.release>17</maven.compiler.release>
+  </properties>
+
+  <!-- Dependencies are added in Phase 4 -->
+  <dependencies>
+  </dependencies>
+
+  <build>
+    <!-- Produces target/ROOT.war, which Tomcat serves at "/" instead of "/discord-bot" -->
+    <finalName>ROOT</finalName>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.13.0</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-war-plugin</artifactId>
+        <version>3.4.0</version>
+        <configuration>
+          <!-- No web.xml: servlets and filters are registered with annotations -->
+          <failOnMissingWebXml>false</failOnMissingWebXml>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
