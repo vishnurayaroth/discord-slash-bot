@@ -1,23 +1,24 @@
 package com.example.discordbot.config;
 
-import com.example.discordbot.discord.Interaction;
-import com.example.discordbot.interactions.ActionStarter;
+import com.example.discordbot.discord.DiscordClient;
+import com.example.discordbot.interactions.CommandRules;
 import com.example.discordbot.interactions.InteractionHandler;
 import com.example.discordbot.interactions.RecordGate;
+import com.example.discordbot.jobs.ActionDispatcher;
+import com.example.discordbot.jobs.ActionRunner;
+import com.example.discordbot.persistence.ActionStore;
+import com.example.discordbot.persistence.CommandConfigStore;
 import com.example.discordbot.persistence.Database;
 import com.example.discordbot.persistence.InteractionStore;
-import com.example.discordbot.persistence.NewAction;
-import com.example.discordbot.persistence.Plan;
-import com.example.discordbot.persistence.Planner;
-import com.example.discordbot.persistence.Snapshot;
+import com.example.discordbot.persistence.ServerConnectionStore;
 import com.example.discordbot.security.SignatureVerifier;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
 import jakarta.servlet.annotation.WebListener;
 import java.time.Clock;
-import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -33,6 +34,7 @@ public class AppLifecycle implements ServletContextListener {
 
     private Database database;
     private ThreadPoolExecutor gateExecutor;
+    private ScheduledThreadPoolExecutor jobExecutor;
 
     @Override
     public void contextInitialized(ServletContextEvent event) {
@@ -45,38 +47,52 @@ public class AppLifecycle implements ServletContextListener {
             throw e;
         }
         ServletContext context = event.getServletContext();
+        Clock clock = Clock.systemUTC();
 
         database = new Database(config);
         database.startSchemaInit();
-        InteractionStore store = new InteractionStore(database);
+        InteractionStore interactions = new InteractionStore(database);
+        ActionStore actions = new ActionStore(database);
+        ServerConnectionStore connections = new ServerConnectionStore(database);
+        CommandConfigStore commandConfigs = new CommandConfigStore(database);
+        DiscordClient discord = new DiscordClient(config.botToken());
 
+        // Record step: bounded pool, so a stuck database cannot pile up unbounded work.
         gateExecutor = new ThreadPoolExecutor(4, 4, 30, TimeUnit.SECONDS, new ArrayBlockingQueue<>(8),
                 daemonThreads("record-gate"), new ThreadPoolExecutor.AbortPolicy());
-        RecordGate gate = new RecordGate(store, Timing.RECORD_DEADLINE, Timing.COMMIT_GRACE, gateExecutor);
+        RecordGate gate = new RecordGate(interactions, Timing.RECORD_DEADLINE, Timing.COMMIT_GRACE, gateExecutor);
 
-        // Until User Story 1 adds the real command rules, every command is "unsupported".
-        Planner planner = AppLifecycle::unsupported;
-        ActionStarter starter = interactionId -> { };
-        SignatureVerifier verifier = new SignatureVerifier(config.publicKeyHex(), Clock.systemUTC());
+        // Follow-up work: reply, post and mirror run as independent timed tasks.
+        jobExecutor = new ScheduledThreadPoolExecutor(4, daemonThreads("actions"));
+        jobExecutor.setRemoveOnCancelPolicy(true);
+        ActionRunner runner = new ActionRunner(actions, interactions, connections, discord, config,
+                ActionRunner.simpleHandler(), clock);
+        ActionDispatcher dispatcher = new ActionDispatcher(actions, runner, jobExecutor, Timing.FIRST_REPLY_DELAY);
+
+        SignatureVerifier verifier = new SignatureVerifier(config.publicKeyHex(), clock);
+        InteractionHandler handler = new InteractionHandler(verifier, gate, new CommandRules(), dispatcher);
 
         Services.put(context, AppConfig.class, config);
         Services.put(context, Database.class, database);
-        Services.put(context, InteractionHandler.class, new InteractionHandler(verifier, gate, planner, starter));
+        Services.put(context, DiscordClient.class, discord);
+        Services.put(context, CommandConfigStore.class, commandConfigs);
+        Services.put(context, ServerConnectionStore.class, connections);
+        Services.put(context, InteractionStore.class, interactions);
+        Services.put(context, InteractionHandler.class, handler);
         LOG.log(System.Logger.Level.INFO, "discord-bot started");
     }
 
     @Override
     public void contextDestroyed(ServletContextEvent event) {
+        if (jobExecutor != null) {
+            jobExecutor.shutdownNow();
+        }
         if (gateExecutor != null) {
             gateExecutor.shutdownNow();
         }
         if (database != null) {
             database.close();
         }
-    }
-
-    private static Plan unsupported(Interaction interaction, Snapshot snapshot) {
-        return new Plan("unsupported", false, List.of(new NewAction("reply", "That command is not supported.")));
     }
 
     static ThreadFactory daemonThreads(String prefix) {

@@ -56,3 +56,20 @@ never recorded later), a blocked downstream (acknowledgement still returns), the
 | T038 set Discord/mirror/admin variables on Render, deploy, save the Interactions Endpoint URL, send an unsigned and a wrongly signed request with curl | Deferred task / skipped live test | Needs the maintainer's Render and Discord accounts and a public deployment | Discord accepts `https://<app>/interactions` (US2 scenario 3) and forged requests get 401 with nothing in the log (US2 scenario 1, SC-002) |
 | Live check that Discord shows the private "thinking" state and no "did not respond" | Skipped live test | Needs a real Discord server | Covered by quickstart rows and T098 |
 | Cold-database behavior of the 2.5 s record deadline | Skipped live test | Needs Neon and the R1 measurement (T012/T013) | `Timing.RECORD_DEADLINE` confirmed or changed |
+
+## Phase 4: User Story 1 (commands end to end)
+
+Automated tests written and run: 23, all passing (CommandRulesTest 12, StoresTest 5 on a real Postgres,
+ActionRunnerTest 6 against a real Postgres and a JDK HttpServer stub standing in for Discord and the mirror
+webhook). They cover every outcome (handled, not_configured, wrong_server, unsupported, disabled), the
+"urgent" rule in any letter case, the 500 ms first-reply delay, post and mirror going out at once, a failing
+mirror never delaying the reply, sanitized stored errors, and `updated_at` set on every action update.
+
+Implementation note: the "start the actions after the acknowledgement" behavior (T047) was already built in
+Phase 3 (the handler returns an after-response callback and gives the gate a late-commit callback); this phase
+added the real `ActionDispatcher`, `ActionRunner`, `CommandRules` and the wiring in `AppLifecycle`.
+
+| Item | Kind | Reason | Done when |
+|---|---|---|---|
+| T050 live run of `/status`, `/report`, and `/report ... urgent` in a real Discord server, including the early-edit race and `allowed_mentions` behavior | Deferred task / skipped live test | Needs Discord, Render and Neon accounts | Quickstart US1 rows pass; results recorded in research R5 and R13 |
+| Interim setup (register commands with curl, insert the connection row) | Manual steps | Needs the bot token and database access; documented in `quickstart.md` | Commands visible in Discord; a `server_connection` row exists |

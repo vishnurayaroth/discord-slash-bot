@@ -57,6 +57,32 @@ The service refuses to start if a required variable is missing, and says which o
    server, pick a text channel, save. This registers `/status` and `/report`.
 6. Run the checks below.
 
+## Interim setup before the Connect page exists
+
+Until the Connect page (User Story 5) is built, register the commands and record the connected
+server by hand. This section is removed when that page exists (task T086).
+
+1. Register the two commands for your test server with Discord's bulk-overwrite call. The token is
+   read from your shell environment; never type it into a file.
+
+   ```text
+   curl -X PUT "https://discord.com/api/v10/applications/$DISCORD_APPLICATION_ID/guilds/<GUILD_ID>/commands" \
+     -H "Authorization: Bot $DISCORD_BOT_TOKEN" -H "Content-Type: application/json" \
+     -d '[{"name":"status","description":"Check that the service is running","type":1},
+          {"name":"report","description":"Send a report to the admins","type":1,
+           "options":[{"name":"text","description":"What to report","type":3,"required":true,"max_length":1000}]}]'
+   ```
+
+2. Insert the single connection row (turn on Developer Mode in Discord to copy the ids). Run it in
+   Neon's SQL editor or any Postgres client:
+
+   ```text
+   INSERT INTO server_connection (id, guild_id, guild_name, channel_id, channel_name)
+   VALUES (1, '<GUILD_ID>', '<server name>', '<CHANNEL_ID>', '<channel name>')
+   ON CONFLICT (id) DO UPDATE SET guild_id = EXCLUDED.guild_id, guild_name = EXCLUDED.guild_name,
+     channel_id = EXCLUDED.channel_id, channel_name = EXCLUDED.channel_name, connected_at = now();
+   ```
+
 ## Validation checks (in a test server)
 
 Each maps to the spec's scenarios. Have the dashboard log open.
