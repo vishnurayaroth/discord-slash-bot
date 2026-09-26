@@ -42,3 +42,17 @@ Findings worth knowing:
 - Testcontainers 2.0.5 works with Docker 28.4 on this machine (was an unverified risk in research R14).
 - `DatabaseConfigTest` caught that HikariCP 7's default `keepaliveTime` is 2 minutes, not 0. It is now set to 0
   explicitly and research R4 and R8 were corrected.
+
+## Phase 3: User Story 2 (authentic, handled once, answered in time)
+
+Automated tests written and run: 35, all passing (RecordGateTest 10, InteractionHandlerTest 12,
+InteractionStoreTest 6 on a real Postgres, SignatureVerifierTest 7). They cover forged, tampered and stale
+requests, PING/PONG, duplicate delivery (five times leaves one record), a slow or failing store (refused and
+never recorded later), a blocked downstream (acknowledgement still returns), the unconfirmed-commit path
+(callback exactly once, never on failure), and a 150-iteration race proving a refused command is never committed.
+
+| Item | Kind | Reason | Done when |
+|---|---|---|---|
+| T038 set Discord/mirror/admin variables on Render, deploy, save the Interactions Endpoint URL, send an unsigned and a wrongly signed request with curl | Deferred task / skipped live test | Needs the maintainer's Render and Discord accounts and a public deployment | Discord accepts `https://<app>/interactions` (US2 scenario 3) and forged requests get 401 with nothing in the log (US2 scenario 1, SC-002) |
+| Live check that Discord shows the private "thinking" state and no "did not respond" | Skipped live test | Needs a real Discord server | Covered by quickstart rows and T098 |
+| Cold-database behavior of the 2.5 s record deadline | Skipped live test | Needs Neon and the R1 measurement (T012/T013) | `Timing.RECORD_DEADLINE` confirmed or changed |
