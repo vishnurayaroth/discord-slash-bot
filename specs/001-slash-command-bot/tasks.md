@@ -212,20 +212,20 @@ Single Maven module, Java packages under `src/main/java/com/example/discordbot/<
 
 ### Tests for User Story 5 ⚠️
 
-- [ ] T078 [P] [US5] Write `src/test/java/com/example/discordbot/discord/CommandDefinitionsTest.java`: JSON for `status` and for `report` (required string option `text`, `max_length` 1000, names and descriptions within Discord's limits).
-- [ ] T079 [P] [US5] Write `src/test/java/com/example/discordbot/discord/DiscordClientConnectTest.java` with the stub server: list servers, list channels and keep only text channels (type 0), the test message, the bulk command registration body, and the `Authorization: Bot` header; errors carry no token.
-- [ ] T080 [P] [US5] Write `src/test/java/com/example/discordbot/dashboard/ConnectServiceTest.java`: nothing is saved when the test message fails; a channel id not in the listed set is rejected; success saves the connection and registers the commands.
-- [ ] T081 [P] [US5] Write `src/test/java/com/example/discordbot/persistence/ServerConnectionStoreTest.java` (Testcontainers): saving twice keeps a single row and updates it.
+- [X] T078 [P] [US5] Write `src/test/java/com/example/discordbot/discord/CommandDefinitionsTest.java`: JSON for `status` and for `report` (required string option `text`, `max_length` 1000, names and descriptions within Discord's limits).
+- [X] T079 [P] [US5] Write `src/test/java/com/example/discordbot/discord/DiscordClientConnectTest.java` with the stub server: list servers, list channels and keep only text channels (type 0), the test message, the bulk command registration body, and the `Authorization: Bot` header; errors carry no token.
+- [X] T080 [P] [US5] Write `src/test/java/com/example/discordbot/dashboard/ConnectServiceTest.java`: nothing is saved when the test message fails; a channel id not in the listed set is rejected; success saves the connection and registers the commands.
+- [X] T081 [P] [US5] Write `src/test/java/com/example/discordbot/persistence/ServerConnectionStoreTest.java` (Testcontainers): saving twice keeps a single row and updates it.
 
 ### Implementation for User Story 5
 
-- [ ] T082 [P] [US5] Create `src/main/java/com/example/discordbot/discord/CommandDefinitions.java`. Makes T078 pass.
-- [ ] T083 [US5] Extend `src/main/java/com/example/discordbot/discord/DiscordClient.java` with list guilds, list channels, test message, and register commands (bulk overwrite). Makes T079 pass.
-- [ ] T084 [P] [US5] Extend `src/main/java/com/example/discordbot/persistence/ServerConnectionStore.java` with a save that keeps one row with id 1. Makes T081 pass.
-- [ ] T085 [US5] Create `src/main/java/com/example/discordbot/dashboard/ConnectService.java`: verify by test message, then save, then register, in that order. Makes T080 pass. Depends on T083, T084.
-- [ ] T086 [US5] Create `src/main/java/com/example/discordbot/dashboard/ConnectServlet.java` and `src/main/webapp/WEB-INF/views/connect.jsp`: current connection, the "Add the bot" invite link built from the application id with permissions 3072, Refresh to list servers, pick a server then a channel, CSRF token on the form, errors shown; remove the interim section from `specs/001-slash-command-bot/quickstart.md` (added in T048).
-- [ ] T087 [US5] Run `mvn -Dtest=CommandDefinitionsTest,DiscordClientConnectTest,ConnectServiceTest,ServerConnectionStoreTest test` until green (tests are under `src/test/java/com/example/discordbot/`).
-- [ ] T088 [US5] **[Maintainer]** Run the US5 rows of the quickstart validation table, and time a first-time connect against SC-008 (under 5 minutes). Steps are in `specs/001-slash-command-bot/quickstart.md`.
+- [X] T082 [P] [US5] Create `src/main/java/com/example/discordbot/discord/CommandDefinitions.java`. Makes T078 pass.
+- [X] T083 [US5] Extend `src/main/java/com/example/discordbot/discord/DiscordClient.java` with list guilds, list channels, test message, and register commands (bulk overwrite). Makes T079 pass.
+- [X] T084 [P] [US5] Extend `src/main/java/com/example/discordbot/persistence/ServerConnectionStore.java` with a save that keeps one row with id 1. Makes T081 pass.
+- [X] T085 [US5] Create `src/main/java/com/example/discordbot/dashboard/ConnectService.java`: verify by test message, then save, then register, in that order. Makes T080 pass. Depends on T083, T084.
+- [X] T086 [US5] Create `src/main/java/com/example/discordbot/dashboard/ConnectServlet.java` and `src/main/webapp/WEB-INF/views/connect.jsp`: current connection, the "Add the bot" invite link built from the application id with permissions 3072, Refresh to list servers, pick a server then a channel, CSRF token on the form, errors shown; remove the interim section from `specs/001-slash-command-bot/quickstart.md` (added in T048).
+- [X] T087 [US5] Run `mvn -Dtest=CommandDefinitionsTest,DiscordClientConnectTest,ConnectServiceTest,ServerConnectionStoreTest test` until green (tests are under `src/test/java/com/example/discordbot/`).
+- [ ] T088 [US5] **[Maintainer]** Run the US5 rows of the quickstart validation table, and time a first-time connect against SC-008 (under 5 minutes). Steps are in `specs/001-slash-command-bot/quickstart.md`. (deferred: needs maintainer)
 
 **Checkpoint**: Stories 1-5 work; no manual seeding is needed.
 

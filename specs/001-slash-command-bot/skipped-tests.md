@@ -116,3 +116,21 @@ Bugs found by that local run and fixed in this phase:
 |---|---|---|---|
 | T077 generate the real admin hash, set the real `ADMIN_*` values on Render, run the US4 quickstart rows on the deployment (new command visible within 5 s, markup shown as text, sign-out) | Deferred task / skipped live test | Needs the maintainer's credentials and the live deployment | SC-005 and SC-006 confirmed live |
 | JSP output escaping (`<c:out>`) on the live pages | Skipped live test | Only the script is covered by an automated guard; the JSPs were checked by rendering them locally | Quickstart markup row passes |
+
+## Phase 7: User Story 5 (connect a Discord server)
+
+Automated tests written and run: 32 including the earlier client tests re-run (CommandDefinitionsTest 5,
+DiscordClientConnectTest 5, ConnectServiceTest 8, ServerConnectionStoreTest 2, DiscordClientTest 12). They
+cover the command definitions against Discord's naming rules, listing servers and text channels only,
+bulk command registration, the fixed order (test message, then save, then register), nothing saved when the
+test message fails, unlisted servers and channels rejected, registration failure keeping the connection with a
+"save again" message, the channel change moving later posts, and the invite link (scopes and permission 3072).
+
+Extra local verification: the Connect page was rendered on the real Docker image. Invite link correct; the
+page never contains the bot token; the Discord-unreachable paths show an escaped error and save nothing; a
+POST without the CSRF token gets 403.
+
+| Item | Kind | Reason | Done when |
+|---|---|---|---|
+| T088 connect a real test server through the page, run `/report` and see the post in the chosen channel, change the channel, time a first-time connect | Deferred task / skipped live test | Needs the maintainer's Discord server, bot and deployment | Quickstart US5 rows pass; SC-008 (under 5 minutes) confirmed |
+| Real Discord responses to the list, channel-list, test-post and command-registration calls | Skipped live test | Needs Discord; the calls follow the documented shapes and are tested only against a stub | Confirmed during T088 |

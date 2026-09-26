@@ -57,6 +57,56 @@ public final class DiscordClient {
         return call("POST", webhookAddress, false, messageBody(content)).result();
     }
 
+    // ---- dashboard: connecting a server ----------------------------------------------------
+
+    public record Guild(String id, String name) {}
+
+    public record Channel(String id, String name) {}
+
+    /** A lookup result: the classified call outcome plus whatever was read (empty on failure). */
+    public record Fetched<T>(DiscordResult result, T value) {}
+
+    /** The servers the bot has been added to. */
+    public Fetched<java.util.List<Guild>> listGuilds() {
+        Raw raw = call("GET", base + "/users/@me/guilds?limit=200", true, null);
+        java.util.List<Guild> guilds = new java.util.ArrayList<>();
+        if (raw.result().isSuccess()) {
+            for (JsonNode n : parseArray(raw.body())) {
+                guilds.add(new Guild(n.path("id").asText(), n.path("name").asText()));
+            }
+        }
+        return new Fetched<>(raw.result(), guilds);
+    }
+
+    /** A server's text channels (Discord channel type 0). */
+    public Fetched<java.util.List<Channel>> listChannels(String guildId) {
+        Raw raw = call("GET", base + "/guilds/" + guildId + "/channels", true, null);
+        java.util.List<Channel> channels = new java.util.ArrayList<>();
+        if (raw.result().isSuccess()) {
+            for (JsonNode n : parseArray(raw.body())) {
+                if (n.path("type").asInt(-1) == 0) {
+                    channels.add(new Channel(n.path("id").asText(), n.path("name").asText()));
+                }
+            }
+        }
+        return new Fetched<>(raw.result(), channels);
+    }
+
+    /** Registers (bulk-overwrites) the slash commands for one server. Safe to repeat. */
+    public DiscordResult registerCommands(String applicationId, String guildId) {
+        String address = base + "/applications/" + applicationId + "/guilds/" + guildId + "/commands";
+        return call("PUT", address, true, CommandDefinitions.json()).result();
+    }
+
+    private static JsonNode parseArray(String body) {
+        try {
+            JsonNode node = MAPPER.readTree(body);
+            return node.isArray() ? node : MAPPER.createArrayNode();
+        } catch (IOException | RuntimeException e) {
+            return MAPPER.createArrayNode();
+        }
+    }
+
     // ---- internals ---------------------------------------------------------------------
 
     record Raw(DiscordResult result, String body) {}
