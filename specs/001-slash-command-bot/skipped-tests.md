@@ -134,3 +134,20 @@ POST without the CSRF token gets 403.
 |---|---|---|---|
 | T088 connect a real test server through the page, run `/report` and see the post in the chosen channel, change the channel, time a first-time connect | Deferred task / skipped live test | Needs the maintainer's Discord server, bot and deployment | Quickstart US5 rows pass; SC-008 (under 5 minutes) confirmed |
 | Real Discord responses to the list, channel-list, test-post and command-registration calls | Skipped live test | Needs Discord; the calls follow the documented shapes and are tested only against a stub | Confirmed during T088 |
+
+## Phase 8: User Story 6 (configure command behavior)
+
+Automated tests written and run: 17 (ConfigServiceTest 8 on a real Postgres, MaskedAddressTest 5, AppConfigTest 4
+re-run). They cover empty, blank and null reply text refused with the old value kept, unknown commands and
+invalid enabled values refused, the last saved edit winning, text trimmed but otherwise verbatim, and
+SC-009: disabling a command or changing its reply text changes the very next command's outcome and stored
+reply with no restart. The masked address never reveals the webhook id or token.
+
+Extra local verification: the Commands page was exercised on the real Docker image. It shows only the masked
+address; an empty reply is refused; a POST without the CSRF token gets 403; a saved change redirects with a
+notice; the very next signed `/report` was recorded as `disabled` with "This command is currently
+unavailable."; markup in the reply text is shown escaped.
+
+| Item | Kind | Reason | Done when |
+|---|---|---|---|
+| T095 run the US6 quickstart rows on the deployment: disable `/report` and see "currently unavailable" in Discord, change the reply text, save an empty text, POST without a token | Deferred task / skipped live test | Needs the live deployment and a Discord server | Quickstart US6 rows pass (US6 scenarios 1 to 5) |

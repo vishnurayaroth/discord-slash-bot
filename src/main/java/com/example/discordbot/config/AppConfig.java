@@ -71,6 +71,27 @@ public final class AppConfig {
 
     public String adminPasswordHash() { return values.get("ADMIN_PASSWORD_HASH"); }
 
+    /** The second channel's address in a form safe to show in the dashboard (FR-025). */
+    public String maskedMirrorAddress() {
+        return mask(values.get("MIRROR_WEBHOOK_URL"));
+    }
+
+    /**
+     * Keeps only the scheme and host and the last four characters, for example
+     * {@code https://discord.com/…wxyz}. The path (which holds the webhook id and token) is hidden.
+     */
+    public static String mask(String address) {
+        if (address == null || address.isBlank()) {
+            return "not configured";
+        }
+        int schemeEnd = address.indexOf("://");
+        int hostEnd = schemeEnd < 0 ? -1 : address.indexOf('/', schemeEnd + 3);
+        if (schemeEnd < 0 || hostEnd < 0 || address.length() < 16) {
+            return "configured";
+        }
+        return address.substring(0, hostEnd) + "/…" + address.substring(address.length() - 4);
+    }
+
     @Override
     public String toString() {
         return "AppConfig[" + values.size() + " values loaded]";

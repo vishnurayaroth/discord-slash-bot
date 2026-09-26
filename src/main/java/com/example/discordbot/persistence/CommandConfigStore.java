@@ -43,6 +43,23 @@ public final class CommandConfigStore {
         }
     }
 
+    /**
+     * Saves one command's settings; the last saved edit wins. The next command reads the new values
+     * in its own record transaction, so no restart or redeploy is needed (SC-009).
+     *
+     * @return false when there is no such command
+     */
+    public boolean update(String command, boolean enabled, String replyText) throws SQLException {
+        try (Connection c = db.connection();
+                PreparedStatement ps = db.prepare(c,
+                        "UPDATE command_configs SET enabled = ?, reply_text = ?, updated_at = now() WHERE command = ?")) {
+            ps.setBoolean(1, enabled);
+            ps.setString(2, replyText);
+            ps.setString(3, command);
+            return ps.executeUpdate() == 1;
+        }
+    }
+
     private static CommandConfig read(ResultSet rs) throws SQLException {
         return new CommandConfig(rs.getString(1), rs.getBoolean(2), rs.getString(3), rs.getTimestamp(4).toInstant());
     }

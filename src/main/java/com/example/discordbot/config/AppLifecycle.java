@@ -1,5 +1,6 @@
 package com.example.discordbot.config;
 
+import com.example.discordbot.dashboard.ConfigService;
 import com.example.discordbot.dashboard.ConnectService;
 import com.example.discordbot.discord.DiscordClient;
 import com.example.discordbot.interactions.CommandRules;
@@ -81,6 +82,7 @@ public class AppLifecycle implements ServletContextListener {
         SignatureVerifier verifier = new SignatureVerifier(config.publicKeyHex(), clock);
         InteractionHandler handler = new InteractionHandler(verifier, gate, new CommandRules(), dispatcher);
 
+        Services.put(context, ConfigService.class, new ConfigService(commandConfigs));
         Services.put(context, ConnectService.class, new ConnectService(discord, connections, config.applicationId()));
         Services.put(context, AdminAuth.class, new AdminAuth(config));
         Services.put(context, AppConfig.class, config);

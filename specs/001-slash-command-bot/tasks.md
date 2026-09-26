@@ -241,16 +241,16 @@ Single Maven module, Java packages under `src/main/java/com/example/discordbot/<
 
 ### Tests for User Story 6 (REQUIRED for the masked address - Principle IV) ⚠️
 
-- [ ] T089 [P] [US6] Write `src/test/java/com/example/discordbot/dashboard/ConfigServiceTest.java`: empty or whitespace reply text is refused and the old value kept; an unknown command is refused; the last saved edit wins; a disabled command produces the `disabled` outcome on the very next command (SC-009).
-- [ ] T090 [P] [US6] Write `src/test/java/com/example/discordbot/config/MaskedAddressTest.java`: the masked mirror address never reveals the full value and shows "not configured" when absent (FR-025).
+- [X] T089 [P] [US6] Write `src/test/java/com/example/discordbot/dashboard/ConfigServiceTest.java`: empty or whitespace reply text is refused and the old value kept; an unknown command is refused; the last saved edit wins; a disabled command produces the `disabled` outcome on the very next command (SC-009).
+- [X] T090 [P] [US6] Write `src/test/java/com/example/discordbot/config/MaskedAddressTest.java`: the masked mirror address never reveals the full value and shows "not configured" when absent (FR-025).
 
 ### Implementation for User Story 6
 
-- [ ] T091 [P] [US6] Extend `src/main/java/com/example/discordbot/persistence/CommandConfigStore.java` with an update of `enabled` and `reply_text`.
-- [ ] T092 [P] [US6] Add a masked-address getter to `src/main/java/com/example/discordbot/config/AppConfig.java`. Makes T090 pass.
-- [ ] T093 [US6] Create `src/main/java/com/example/discordbot/dashboard/ConfigService.java`, `src/main/java/com/example/discordbot/dashboard/ConfigServlet.java`, and `src/main/webapp/WEB-INF/views/config.jsp`: each command's enabled flag, reply text, and last update; the masked mirror address; validation errors shown with the old value kept; CSRF token on the form. Makes T089 pass.
-- [ ] T094 [US6] Run `mvn -Dtest=ConfigServiceTest,MaskedAddressTest test` until green (tests are under `src/test/java/com/example/discordbot/`).
-- [ ] T095 [US6] **[Maintainer]** Run the US6 rows of the quickstart validation table, including a POST without a token being refused (US6 scenario 5). Steps are in `specs/001-slash-command-bot/quickstart.md`.
+- [X] T091 [P] [US6] Extend `src/main/java/com/example/discordbot/persistence/CommandConfigStore.java` with an update of `enabled` and `reply_text`.
+- [X] T092 [P] [US6] Add a masked-address getter to `src/main/java/com/example/discordbot/config/AppConfig.java`. Makes T090 pass.
+- [X] T093 [US6] Create `src/main/java/com/example/discordbot/dashboard/ConfigService.java`, `src/main/java/com/example/discordbot/dashboard/ConfigServlet.java`, and `src/main/webapp/WEB-INF/views/config.jsp`: each command's enabled flag, reply text, and last update; the masked mirror address; validation errors shown with the old value kept; CSRF token on the form. Makes T089 pass.
+- [X] T094 [US6] Run `mvn -Dtest=ConfigServiceTest,MaskedAddressTest test` until green (tests are under `src/test/java/com/example/discordbot/`).
+- [ ] T095 [US6] **[Maintainer]** Run the US6 rows of the quickstart validation table, including a POST without a token being refused (US6 scenario 5). Steps are in `specs/001-slash-command-bot/quickstart.md`. (deferred: needs maintainer)
 
 **Checkpoint**: All six stories work independently.
 
