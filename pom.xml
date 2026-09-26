@@ -38,6 +38,23 @@
       <artifactId>HikariCP</artifactId>
       <version>7.1.0</version>
     </dependency>
+    <!-- JSTL: <c:out> escaping in the JSP pages (FR-021). Tomcat does not bundle it. -->
+    <dependency>
+      <groupId>jakarta.servlet.jsp.jstl</groupId>
+      <artifactId>jakarta.servlet.jsp.jstl-api</artifactId>
+      <version>3.0.2</version>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.web</groupId>
+      <artifactId>jakarta.servlet.jsp.jstl</artifactId>
+      <version>3.0.1</version>
+    </dependency>
+    <!-- BCrypt: the constitution requires the admin password to be stored as a BCrypt hash -->
+    <dependency>
+      <groupId>at.favre.lib</groupId>
+      <artifactId>bcrypt</artifactId>
+      <version>0.10.2</version>
+    </dependency>
     <!-- JSON: parse Discord payloads and build responses (the JDK has no JSON parser) -->
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>

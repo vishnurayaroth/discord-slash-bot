@@ -57,6 +57,21 @@ The service refuses to start if a required variable is missing, and says which o
    server, pick a text channel, save. This registers `/status` and `/report`.
 6. Run the checks below.
 
+## Create the admin password hash
+
+`ADMIN_PASSWORD_HASH` must be a BCrypt hash, never the password. From the repository root, build once
+and run the helper. It reads the password from standard input, so it never appears in your shell
+history or in the process list:
+
+```text
+mvn -q package -DskipTests
+java -cp "target/ROOT/WEB-INF/lib/*:target/ROOT/WEB-INF/classes" com.example.discordbot.security.HashPassword
+```
+
+Type the password, press Enter, and copy the line it prints (it starts with `$2a$10$`) into the
+`ADMIN_PASSWORD_HASH` variable on Render. In a `.env` file or a shell, wrap the value in single quotes:
+it contains `$` characters that would otherwise be expanded.
+
 ## Interim setup before the Connect page exists
 
 Until the Connect page (User Story 5) is built, register the commands and record the connected

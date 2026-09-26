@@ -13,6 +13,7 @@ import com.example.discordbot.persistence.CommandConfigStore;
 import com.example.discordbot.persistence.Database;
 import com.example.discordbot.persistence.InteractionStore;
 import com.example.discordbot.persistence.ServerConnectionStore;
+import com.example.discordbot.security.AdminAuth;
 import com.example.discordbot.security.SignatureVerifier;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletContextEvent;
@@ -79,6 +80,7 @@ public class AppLifecycle implements ServletContextListener {
         SignatureVerifier verifier = new SignatureVerifier(config.publicKeyHex(), clock);
         InteractionHandler handler = new InteractionHandler(verifier, gate, new CommandRules(), dispatcher);
 
+        Services.put(context, AdminAuth.class, new AdminAuth(config));
         Services.put(context, AppConfig.class, config);
         Services.put(context, Database.class, database);
         Services.put(context, DiscordClient.class, discord);

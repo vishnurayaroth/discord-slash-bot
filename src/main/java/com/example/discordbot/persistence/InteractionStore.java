@@ -6,6 +6,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * The record step (research.md R2, data-model.md): one short transaction that reads the
@@ -63,6 +67,38 @@ public final class InteractionStore implements Recorder {
                 }
                 throw e;
             }
+        }
+    }
+
+    /** The newest interactions with their actions, for the dashboard log (never includes tokens). */
+    public List<LogEntry> latest(int limit) throws SQLException {
+        try (Connection c = db.connection()) {
+            Map<String, LogEntry> byId = new LinkedHashMap<>();
+            try (PreparedStatement ps = db.prepare(c, "SELECT id, received_at, member_name, command, text, priority, outcome "
+                    + "FROM interactions ORDER BY received_at DESC, id DESC LIMIT ?")) {
+                ps.setInt(1, limit);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        byId.put(rs.getString(1), new LogEntry(rs.getString(1), rs.getTimestamp(2).toInstant(),
+                                rs.getString(3), rs.getString(4), rs.getString(5), rs.getBoolean(6), rs.getString(7),
+                                new ArrayList<>()));
+                    }
+                }
+            }
+            if (byId.isEmpty()) {
+                return List.of();
+            }
+            try (PreparedStatement ps = db.prepare(c, "SELECT interaction_id, kind, status, attempts, last_error "
+                    + "FROM actions WHERE interaction_id = ANY (?) ORDER BY id")) {
+                ps.setArray(1, c.createArrayOf("text", byId.keySet().toArray()));
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        byId.get(rs.getString(1)).actions().add(
+                                new LogEntry.LogAction(rs.getString(2), rs.getString(3), rs.getInt(4), rs.getString(5)));
+                    }
+                }
+            }
+            return new ArrayList<>(byId.values());
         }
     }
 

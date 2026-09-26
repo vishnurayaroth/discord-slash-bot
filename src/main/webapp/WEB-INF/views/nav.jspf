@@ -1,0 +1,13 @@
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<header class="top">
+  <strong class="brand">Discord bot admin</strong>
+  <nav>
+    <a href="<c:url value='/dashboard'/>" class="${page == 'log' ? 'active' : ''}">Log</a>
+    <a href="<c:url value='/dashboard/config'/>" class="${page == 'config' ? 'active' : ''}">Commands</a>
+    <a href="<c:url value='/dashboard/connect'/>" class="${page == 'connect' ? 'active' : ''}">Server</a>
+  </nav>
+  <form method="post" action="<c:url value='/logout'/>" class="signout">
+    <input type="hidden" name="csrf" value="<c:out value='${csrf}'/>">
+    <button type="submit">Sign out</button>
+  </form>
+</header>

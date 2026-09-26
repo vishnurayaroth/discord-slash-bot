@@ -2,10 +2,13 @@
 FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /build
 COPY pom.xml .
-# Cache dependencies in their own layer so source edits do not re-download them
-RUN mvn -B -q dependency:go-offline
 COPY src ./src
-RUN mvn -B -q package -DskipTests
+# Downloads from Maven Central occasionally fail with a transient TLS error ("Tag mismatch").
+# Single-threaded downloads are more reliable, and a failed attempt is simply retried.
+RUN for i in 1 2 3 4 5; do \
+      mvn -B -q -Dmaven.artifact.threads=1 package -DskipTests && exit 0; \
+      echo "build attempt $i failed, retrying"; sleep 5; \
+    done; exit 1
 
 # Stage 2: run it as ROOT.war on Tomcat 10.1 (served at "/")
 FROM tomcat:10.1-jdk17-temurin

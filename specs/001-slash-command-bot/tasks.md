@@ -175,28 +175,28 @@ Single Maven module, Java packages under `src/main/java/com/example/discordbot/<
 
 ### Tests for User Story 4 (REQUIRED - Principle IV; FR-018, FR-021, FR-024) ⚠️
 
-- [ ] T059 [P] [US4] Create test support `src/test/java/com/example/discordbot/support/ServletFakes.java`: `java.lang.reflect.Proxy` fakes for request, response, and session (no mocking library).
-- [ ] T060 [P] [US4] Write `src/test/java/com/example/discordbot/security/AdminAuthTest.java`: correct password verifies against a BCrypt hash; wrong password and wrong username produce the same generic failure.
-- [ ] T061 [P] [US4] Write `src/test/java/com/example/discordbot/security/AdminAuthFilterTest.java` (uses T059): signed-out `/dashboard/*` redirects to `/login`; signed-out `/api/*` returns 401 JSON without redirect (SC-006); a POST under `/dashboard/*` or to `/logout` without a matching CSRF token returns 403 and reaches nothing; signed-in requests with a valid token pass.
-- [ ] T062 [P] [US4] Write `src/test/java/com/example/discordbot/dashboard/LogViewTest.java`: JSON shape from contracts/dashboard-http.md; `overall` is derived correctly (complete, in_progress, failed); the output never contains an interaction token, webhook address, or credential; markup in `member` and `text` is preserved as data.
-- [ ] T063 [P] [US4] Write `src/test/java/com/example/discordbot/dashboard/LiveLogScriptTest.java`: reads `src/main/webapp/static/js/live-log.js` and asserts it writes with `textContent` and never uses `innerHTML` (FR-021).
+- [X] T059 [P] [US4] Create test support `src/test/java/com/example/discordbot/support/ServletFakes.java`: `java.lang.reflect.Proxy` fakes for request, response, and session (no mocking library).
+- [X] T060 [P] [US4] Write `src/test/java/com/example/discordbot/security/AdminAuthTest.java`: correct password verifies against a BCrypt hash; wrong password and wrong username produce the same generic failure.
+- [X] T061 [P] [US4] Write `src/test/java/com/example/discordbot/security/AdminAuthFilterTest.java` (uses T059): signed-out `/dashboard/*` redirects to `/login`; signed-out `/api/*` returns 401 JSON without redirect (SC-006); a POST under `/dashboard/*` or to `/logout` without a matching CSRF token returns 403 and reaches nothing; signed-in requests with a valid token pass.
+- [X] T062 [P] [US4] Write `src/test/java/com/example/discordbot/dashboard/LogViewTest.java`: JSON shape from contracts/dashboard-http.md; `overall` is derived correctly (complete, in_progress, failed); the output never contains an interaction token, webhook address, or credential; markup in `member` and `text` is preserved as data.
+- [X] T063 [P] [US4] Write `src/test/java/com/example/discordbot/dashboard/LiveLogScriptTest.java`: reads `src/main/webapp/static/js/live-log.js` and asserts it writes with `textContent` and never uses `innerHTML` (FR-021).
 
 ### Implementation for User Story 4
 
-- [ ] T064 [US4] Add to `pom.xml`: `jakarta.servlet.jsp.jstl:jakarta.servlet.jsp.jstl-api:3.0.2`, `org.glassfish.web:jakarta.servlet.jsp.jstl:3.0.1`, `at.favre.lib:bcrypt:0.10.2` (research.md R14).
-- [ ] T065 [P] [US4] Create `src/main/java/com/example/discordbot/security/AdminAuth.java`: verify username and BCrypt password against `AppConfig`; identical failure for either mistake. Makes T060 pass.
-- [ ] T066 [P] [US4] Create `src/main/java/com/example/discordbot/security/CsrfTokens.java`: one token per session, constant-time comparison.
-- [ ] T067 [US4] Create `src/main/java/com/example/discordbot/security/AdminAuthFilter.java`: annotated `@WebFilter(urlPatterns = {"/dashboard/*", "/api/*", "/logout"})` so no other file needs to register it; redirect or 401 as in the contract; enforces the CSRF token on every POST. Makes T061 pass. Depends on T065, T066.
-- [ ] T068 [P] [US4] Create `src/main/java/com/example/discordbot/security/HashPassword.java`: a `main` that reads a password from standard input (not arguments) and prints a BCrypt hash (cost 10) for `ADMIN_PASSWORD_HASH`; document its use in `specs/001-slash-command-bot/quickstart.md`.
-- [ ] T069 [US4] Create `src/main/java/com/example/discordbot/security/SessionConfig.java`: a `@WebListener` `ServletContextListener` that sets the session cookie `HttpOnly`, `Secure`, `SameSite=Lax` and the 30-minute inactivity timeout. It does not touch `AppLifecycle.java`.
-- [ ] T070 [P] [US4] Create `src/main/java/com/example/discordbot/dashboard/LoginServlet.java` and `src/main/webapp/WEB-INF/views/login.jsp`: form, generic "Sign-in failed." message, session id replaced on success.
-- [ ] T071 [P] [US4] Create `src/main/java/com/example/discordbot/dashboard/LogoutServlet.java`: `POST /logout` ends the session and redirects to `/login`.
-- [ ] T072 [P] [US4] Add a "latest N interactions with their actions" query to `src/main/java/com/example/discordbot/persistence/InteractionStore.java` and create `src/main/java/com/example/discordbot/dashboard/LogView.java` that builds the contract JSON. Makes T062 pass.
-- [ ] T073 [US4] Create `src/main/java/com/example/discordbot/dashboard/LogApiServlet.java`: `GET /api/log` with `limit` (default 50, max 200). Depends on T072.
-- [ ] T074 [US4] Create `src/main/java/com/example/discordbot/dashboard/DashboardServlet.java` and `src/main/webapp/WEB-INF/views/dashboard.jsp`: page shell using `<c:out>`, a logout form with the CSRF token, and links to the config and connect pages.
-- [ ] T075 [P] [US4] Create `src/main/webapp/static/js/live-log.js` and `src/main/webapp/static/css/app.css`: poll `/api/log` every 3 s, redraw with `textContent`, pause when the tab is hidden and after 10 minutes without input, send the browser to `/login` on 401 (research.md R9). Makes T063 pass.
-- [ ] T076 [US4] Run `mvn -Dtest=AdminAuthTest,AdminAuthFilterTest,LogViewTest,LiveLogScriptTest test` until green (tests are under `src/test/java/com/example/discordbot/`).
-- [ ] T077 [US4] **[Maintainer]** Generate the admin hash with T068, set the real `ADMIN_*` values on Render, and run the US4 rows of the quickstart validation table, including a new command appearing within 5 seconds (SC-005) and the markup check. Steps are in `specs/001-slash-command-bot/quickstart.md`.
+- [X] T064 [US4] Add to `pom.xml`: `jakarta.servlet.jsp.jstl:jakarta.servlet.jsp.jstl-api:3.0.2`, `org.glassfish.web:jakarta.servlet.jsp.jstl:3.0.1`, `at.favre.lib:bcrypt:0.10.2` (research.md R14).
+- [X] T065 [P] [US4] Create `src/main/java/com/example/discordbot/security/AdminAuth.java`: verify username and BCrypt password against `AppConfig`; identical failure for either mistake. Makes T060 pass.
+- [X] T066 [P] [US4] Create `src/main/java/com/example/discordbot/security/CsrfTokens.java`: one token per session, constant-time comparison.
+- [X] T067 [US4] Create `src/main/java/com/example/discordbot/security/AdminAuthFilter.java`: annotated `@WebFilter(urlPatterns = {"/dashboard/*", "/api/*", "/logout"})` so no other file needs to register it; redirect or 401 as in the contract; enforces the CSRF token on every POST. Makes T061 pass. Depends on T065, T066.
+- [X] T068 [P] [US4] Create `src/main/java/com/example/discordbot/security/HashPassword.java`: a `main` that reads a password from standard input (not arguments) and prints a BCrypt hash (cost 10) for `ADMIN_PASSWORD_HASH`; document its use in `specs/001-slash-command-bot/quickstart.md`.
+- [X] T069 [US4] Create `src/main/java/com/example/discordbot/security/SessionConfig.java`: a `@WebListener` `ServletContextListener` that sets the session cookie `HttpOnly`, `Secure`, `SameSite=Lax` and the 30-minute inactivity timeout. It does not touch `AppLifecycle.java`.
+- [X] T070 [P] [US4] Create `src/main/java/com/example/discordbot/dashboard/LoginServlet.java` and `src/main/webapp/WEB-INF/views/login.jsp`: form, generic "Sign-in failed." message, session id replaced on success.
+- [X] T071 [P] [US4] Create `src/main/java/com/example/discordbot/dashboard/LogoutServlet.java`: `POST /logout` ends the session and redirects to `/login`.
+- [X] T072 [P] [US4] Add a "latest N interactions with their actions" query to `src/main/java/com/example/discordbot/persistence/InteractionStore.java` and create `src/main/java/com/example/discordbot/dashboard/LogView.java` that builds the contract JSON. Makes T062 pass.
+- [X] T073 [US4] Create `src/main/java/com/example/discordbot/dashboard/LogApiServlet.java`: `GET /api/log` with `limit` (default 50, max 200). Depends on T072.
+- [X] T074 [US4] Create `src/main/java/com/example/discordbot/dashboard/DashboardServlet.java` and `src/main/webapp/WEB-INF/views/dashboard.jsp`: page shell using `<c:out>`, a logout form with the CSRF token, and links to the config and connect pages.
+- [X] T075 [P] [US4] Create `src/main/webapp/static/js/live-log.js` and `src/main/webapp/static/css/app.css`: poll `/api/log` every 3 s, redraw with `textContent`, pause when the tab is hidden and after 10 minutes without input, send the browser to `/login` on 401 (research.md R9). Makes T063 pass.
+- [X] T076 [US4] Run `mvn -Dtest=AdminAuthTest,AdminAuthFilterTest,LogViewTest,LiveLogScriptTest test` until green (tests are under `src/test/java/com/example/discordbot/`).
+- [ ] T077 [US4] **[Maintainer]** Generate the admin hash with T068, set the real `ADMIN_*` values on Render, and run the US4 rows of the quickstart validation table, including a new command appearing within 5 seconds (SC-005) and the markup check. Steps are in `specs/001-slash-command-bot/quickstart.md`. (deferred: needs maintainer)
 
 **Checkpoint**: Stories 1-4 work; the admin can watch everything.
 

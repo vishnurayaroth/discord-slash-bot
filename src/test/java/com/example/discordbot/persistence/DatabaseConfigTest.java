@@ -18,6 +18,7 @@ class DatabaseConfigTest {
     @Test
     void poolNeverRefillsItselfAndNeverKeepsTheDatabaseAwake() {
         HikariConfig c = Database.hikariConfig("jdbc:postgresql://host/db", "user", "pass");
+        assertEquals("org.postgresql.Driver", c.getDriverClassName(), "found only when named, under Tomcat");
         assertEquals(4, c.getMaximumPoolSize());
         assertEquals(0, c.getMinimumIdle(), "minimumIdle > 0 makes the pool reconnect and wakes Neon");
         assertEquals(60_000, c.getIdleTimeout());

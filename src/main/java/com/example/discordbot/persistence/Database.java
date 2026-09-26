@@ -45,6 +45,9 @@ public final class Database implements AutoCloseable {
     public static HikariConfig hikariConfig(String url, String user, String password) {
         HikariConfig c = new HikariConfig();
         c.setJdbcUrl(url);
+        // Under Tomcat's webapp class loader DriverManager does not find the driver on its own
+        // ("No suitable driver"), so it is named explicitly.
+        c.setDriverClassName("org.postgresql.Driver");
         c.setUsername(user);
         c.setPassword(password);
         c.setMaximumPoolSize(4);

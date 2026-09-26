@@ -90,3 +90,29 @@ were already built in Phase 4; this phase added `RetryPolicy`, `RetryScheduler` 
 | Item | Kind | Reason | Done when |
 |---|---|---|---|
 | T058 live check: make the second channel unreachable (temporarily change the address), run a command, restore it; restart the service right after a command | Deferred task / skipped live test | Needs the live deployment and Discord | Reply still arrives, mirror shows pending with attempts, then is delivered; a pending notification survives a restart (quickstart US3 rows) |
+
+## Phase 6: User Story 4 (sign-in and live log)
+
+Automated tests written and run: 26, all passing (AdminAuthTest 5, AdminAuthFilterTest 8, LogViewTest 5,
+LiveLogScriptTest 4, LatestLogTest 2 on a real Postgres, DatabaseConfigTest 2). They cover generic sign-in
+failure, signed-out redirects and 401s, CSRF refusal on every POST, sessions, the exact JSON contract, no
+tokens or addresses in the log JSON, and a guard that the script never uses innerHTML.
+
+Extra local verification (not part of the task list): the real Docker image was run against a local Postgres
+with a locally generated Discord key pair and fake credentials, with outbound DNS disabled so nothing left the
+machine. Checked and passing: signed PING gets PONG; forged, stale, tampered and unsigned requests get 401;
+GET /interactions gets 405; `not_configured` and `handled` outcomes; the urgent flag; five re-deliveries leave
+one record; retries show as pending with rising attempts and `network error`; JSPs compile and render;
+sign-in, cookie flags (`Secure; HttpOnly; SameSite=Lax`), CSRF refusal (403), and logout ending the session;
+zero occurrences of any secret in the API output or the container log.
+
+Bugs found by that local run and fixed in this phase:
+- `No suitable driver`: under Tomcat's class loader the PostgreSQL driver must be named explicitly
+  (`Database.hikariConfig` now sets it; `DatabaseConfigTest` asserts it).
+- The Docker build failed intermittently with a transient TLS error while downloading from Maven Central;
+  the Dockerfile now downloads single-threaded and retries.
+
+| Item | Kind | Reason | Done when |
+|---|---|---|---|
+| T077 generate the real admin hash, set the real `ADMIN_*` values on Render, run the US4 quickstart rows on the deployment (new command visible within 5 s, markup shown as text, sign-out) | Deferred task / skipped live test | Needs the maintainer's credentials and the live deployment | SC-005 and SC-006 confirmed live |
+| JSP output escaping (`<c:out>`) on the live pages | Skipped live test | Only the script is covered by an automated guard; the JSPs were checked by rendering them locally | Quickstart markup row passes |
