@@ -34,7 +34,7 @@ Postgres over JDBC with a pool, Docker on Render free). Nothing here reopens it.
 | Spins down after **15 minutes** without inbound traffic; spin-up takes "about one minute". | render.com/docs/free |
 | 512 MB RAM and **0.1 CPU**. | render.com/docs/compute-plans |
 | 750 free instance hours per **workspace** per month. One always-on service is 744 h in a 31-day month (arithmetic), so it fits, but a second free service in the same workspace would not. | render.com/docs/free |
-| `PORT` defaults to 10000, must bind 0.0.0.0, and can be overridden by setting the env var (so `PORT=8080` works). | render.com/docs/web-services |
+| `PORT` defaults to 10000, must bind 0.0.0.0. The docs say it "can be overridden by setting the env var", but a live deploy on 2026-09-28 found otherwise: with `PORT=8080` set by hand in the dashboard, Render's health check still targeted 10000. See R16 for the fix. | render.com/docs/web-services (the override claim did not hold in practice) |
 | Health check: a GET every few seconds; success is 2xx/3xx within 5 s. Not stated whether health checks stop spin-down. | render.com/docs/health-checks |
 | Filesystem is ephemeral. Regions include Singapore (free-plan availability **unverified**). | render.com/docs/free, /regions |
 | UptimeRobot free: 50 monitors, **5-minute** minimum interval. HTTP monitors send **HEAD** by default; choosing GET is a paid feature. A keyword monitor uses GET. | uptimerobot.com/pricing, blog and FAQ |
@@ -406,10 +406,25 @@ Live checks against a real Discord test server are in `quickstart.md`.
 ## R16. Deployment shape
 
 **Decision.** Multi-stage Dockerfile: build the WAR with Maven on a Java 17 image, then copy it as
-`ROOT.war` into `tomcat:10.1-jdk17-temurin`. `PORT=8080`. Cap the JVM heap around 256 MB and reduce
-Tomcat's thread limit to fit 512 MB; both are starting points to tune in the skeleton deploy.
-Render health check path `/health`. All secrets are Render environment variables; `.env.example`
-lists names only. Render free filesystem is ephemeral, so nothing is stored on disk.
+`ROOT.war` into `tomcat:10.1-jdk17-temurin`. Cap the JVM heap around 256 MB and reduce Tomcat's
+thread limit to fit 512 MB; both are starting points to tune in the skeleton deploy. Render health
+check path `/health`. All secrets are Render environment variables; `.env.example` lists names
+only. Render free filesystem is ephemeral, so nothing is stored on disk.
+
+**Port binding (found live, 2026-09-28).** Tomcat's Connector port is a placeholder,
+`__HTTP_PORT__`, filled in by a small `docker-entrypoint.sh` from the real `$PORT` value present at
+container startup, defaulting to 8080 only for a local `docker run` with none set. The first live
+deploy set `PORT=8080` by hand and still timed out, because Render's health check hit port 10000
+regardless; the container must read whatever value Render actually assigns rather than assume one.
+Do not set `PORT` on Render.
+
+**Shutdown port (found live, 2026-09-28).** Tomcat's internal shutdown port (8005) has no `address`
+restriction in the stock image, so it binds every interface, not just localhost. Render's deploy
+process port-scans the container, found 8005 open, and sent it an HTTP probe; Tomcat correctly
+refused it ("Invalid shutdown command"), and the repeated failure timed out the deploy before Render
+tried the real port. The Dockerfile now disables that listener (`port="-1"` in `server.xml`), which
+is standard practice for Tomcat in a container: Docker/Render stop it with a normal process signal,
+which the JVM's shutdown hook already handles.
 
 **Risk.** With 0.1 CPU, JVM warm-up after a restart is slow; the keep-warm ping (R4) makes restarts
 rare, and R1 measures the first-request cost.

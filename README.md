@@ -63,7 +63,7 @@ variable is missing and says which one, never its value.
 | `DB_USER`, `DB_PASSWORD` | Database credentials |
 | `ADMIN_USERNAME` | The single admin's sign-in name |
 | `ADMIN_PASSWORD_HASH` | BCrypt hash of the admin password. Create it with the helper in `specs/001-slash-command-bot/quickstart.md` ("Create the admin password hash"); wrap it in single quotes in a shell or `.env` because it contains `$`. |
-| `PORT` | Set to `8080` on Render |
+| `PORT` | Not needed on Render: it assigns this itself, and the container reads it at startup and binds Tomcat to it. Only set it for a local `docker run` if you want a port other than the 8080 default. |
 
 ### Tests
 
@@ -82,8 +82,9 @@ Postgres instead, set `TEST_DATABASE_URL`, `TEST_DATABASE_USER` and `TEST_DATABA
    separate.
 2. **Discord:** create an application and bot in the Developer Portal; note the application id and public key;
    reset and copy the bot token. Create a second channel and a webhook on it for `MIRROR_WEBHOOK_URL`.
-3. **Render:** New Web Service from this repository, environment **Docker**, **Free** instance. Set `PORT=8080`
-   and the health check path `/health`. Add every variable above.
+3. **Render:** New Web Service from this repository, environment **Docker**, **Free** instance. Set the health
+   check path to `/health`. Add every variable above except `PORT`, which Render assigns itself; the container
+   reads it at startup and binds Tomcat to it.
 4. **Discord portal:** set the Interactions Endpoint URL to `https://<your-app>/interactions`. Discord tests it
    when you save; it only succeeds once the service is live.
 5. **UptimeRobot:** add an HTTP monitor on `/health` every 5 minutes. Render's free service sleeps after 15

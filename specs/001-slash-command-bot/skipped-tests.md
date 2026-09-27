@@ -13,7 +13,7 @@ Automated tests defined for this phase: none.
 
 | Item | Kind | Reason | Done when |
 |---|---|---|---|
-| T007 create the Render web service | Deferred task | Needs the maintainer's Render account | Service exists with `PORT=8080` and health path `/health` |
+| T007 create the Render web service | Done, guidance corrected below | — | Service exists with health path `/health`; `PORT` is not set (Render assigns it, see the note below) |
 | T008 deploy skeleton, verify public `/health`, log view, cold-start time | Deferred task | Needs the Render deployment | Public `/health` answers GET and HEAD; INFO line seen in Render's log view |
 | T009 UptimeRobot monitor | Deferred task | Needs the maintainer's UptimeRobot account | Monitor shows Up at 5-minute intervals |
 | T010 spike-branch database probe | Deferred task | Only useful with the live measurement; prepared on a separate local branch at the end, never merged | Probe deployed and later removed |
@@ -166,13 +166,31 @@ update (T100); the spike probe for T010 prepared on the local branch `spike/db-p
 | T100 R1 results and the live-only unknowns in `research.md` | Deferred task | Needs T012/T013 and live services | R1 "Results" filled in; remaining unknowns resolved |
 | T101 confirm the submission list | Deferred task | Maintainer's final check | Public URL reachable, README, `.env.example`, test instructions with the throwaway admin login, AI context files, `AI_NOTES.md` |
 
+## Two deploy bugs found and fixed after the first live attempts (2026-09-28)
+
+The first Render deploy timed out twice, from real bugs the local Docker testing had not caught, because
+they only appear under Render's specific health-check and port-scanning behavior:
+
+1. **Tomcat's internal shutdown port (8005) binds every interface**, not just localhost, in the stock image.
+   Render's deploy process port-scans the container, found 8005 open, and sent it an HTTP probe; Tomcat
+   correctly refused it ("Invalid shutdown command"), and the repeated failure timed out the deploy. Fixed by
+   disabling that listener (`port="-1"` in `server.xml`), which is standard practice for Tomcat in a container.
+2. **Render's health check targeted port 10000 even with `PORT=8080` set by hand** in the dashboard's
+   Environment tab. A user-supplied `PORT` variable does not reliably change what Render's own health check
+   targets. Fixed with `docker-entrypoint.sh`, which reads the real `$PORT` present in the container at
+   startup and configures Tomcat's connector to that value, so it is correct regardless of what Render assigns.
+   **`PORT` should not be set on Render at all now.**
+
+Both fixes are verified locally (see the Dockerfile commits): the container listens only on the assigned port,
+with neither 8080 nor 8005 open, and it still stops cleanly. `research.md` R16 has the full detail.
+
 ## What remains for the maintainer, in a sensible order
 
 All code tasks are complete. What is left needs your accounts. The tasks are still unchecked in `tasks.md`,
 each marked "deferred".
 
-1. **Deploy the skeleton and keep it warm:** T007 (Render service), T008 (deploy, check `/health` and the log
-   view), T009 (UptimeRobot).
+1. **Deploy the skeleton and keep it warm:** T007 is done (guidance corrected above); T008 (deploy, check
+   `/health` and the log view), T009 (UptimeRobot).
 2. **Measure the database (optional but recommended before relying on 2.5 s):** push the local branch
    `spike/db-probe` to GitHub, deploy it as a second Render branch or temporarily, then T011 (Neon variables,
    confirm Neon goes idle), T012 (the R1 protocol), T013 (record results and adjust `Timing.RECORD_DEADLINE`

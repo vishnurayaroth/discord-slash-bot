@@ -25,7 +25,7 @@ Set these in a git-ignored `.env` locally and in Render's Environment settings w
 | `DB_USER`, `DB_PASSWORD` | Database credentials. |
 | `ADMIN_USERNAME` | The single admin's sign-in name. |
 | `ADMIN_PASSWORD_HASH` | BCrypt hash of the admin password (never the password). |
-| `PORT` | Set to `8080` on Render. |
+| `PORT` | Not needed on Render: it assigns this itself, and the container reads it at startup and binds Tomcat to it (see the note on the Dockerfile below). Only set it for a local `docker run` on a port other than the 8080 default. |
 
 The service refuses to start if a required variable is missing, and says which one, never its value.
 
@@ -47,7 +47,9 @@ The service refuses to start if a required variable is missing, and says which o
 
 ## First-time setup order
 
-1. Deploy the skeleton to Render (Docker, free instance, `PORT=8080`, health check path `/health`).
+1. Deploy the skeleton to Render (Docker, free instance, health check path `/health`; do not set `PORT`,
+   Render assigns it and the container reads it at startup — a live deploy found that a hand-set `PORT`
+   variable does not reliably change what Render's health check targets).
    Add the UptimeRobot monitor on `/health` at 5-minute intervals.
 2. **Measure database latency** using the protocol in `research.md` R1, and record the result there.
 3. In Discord's developer portal, save `https://<your-app>/interactions` as the Interactions
