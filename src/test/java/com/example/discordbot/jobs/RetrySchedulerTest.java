@@ -58,7 +58,7 @@ class RetrySchedulerTest {
         env.put("DISCORD_PUBLIC_KEY", "k");
         env.put("DISCORD_BOT_TOKEN", "bot-secret");
         env.put("MIRROR_WEBHOOK_URL", stub.base() + "/mirror/hook/abc");
-        env.put("DATABASE_URL", "u");
+        env.put("DATABASE_URL", "jdbc:postgresql://test-host/test-db");
         env.put("DB_USER", "u");
         env.put("DB_PASSWORD", "p");
         env.put("ADMIN_USERNAME", "a");

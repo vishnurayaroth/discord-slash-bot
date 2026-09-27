@@ -54,6 +54,32 @@ class AppConfigTest {
     }
 
     @Test
+    void aDatabaseUrlMissingTheJdbcPrefixIsRejectedWithNoValueInTheMessage() {
+        Map<String, String> env = full();
+        env.put("DATABASE_URL", "postgresql://db-host-value/db");
+        IllegalStateException e = assertThrows(IllegalStateException.class, () -> AppConfig.from(env::get));
+        assertTrue(e.getMessage().contains("jdbc:postgresql://"));
+        assertFalse(e.getMessage().contains("db-host-value"));
+    }
+
+    @Test
+    void aDatabaseUrlWithEmbeddedCredentialsIsRejected() {
+        Map<String, String> env = full();
+        env.put("DATABASE_URL", "jdbc:postgresql://user:secret-password-value@db-host-value/db");
+        IllegalStateException e = assertThrows(IllegalStateException.class, () -> AppConfig.from(env::get));
+        assertTrue(e.getMessage().contains("DB_USER"));
+        assertFalse(e.getMessage().contains("secret-password-value"));
+    }
+
+    @Test
+    void aWellFormedDatabaseUrlIsAccepted() {
+        Map<String, String> env = full();
+        env.put("DATABASE_URL", "jdbc:postgresql://db-host-value/db?sslmode=require&channelBinding=require");
+        assertEquals("jdbc:postgresql://db-host-value/db?sslmode=require&channelBinding=require",
+                AppConfig.from(env::get).databaseUrl());
+    }
+
+    @Test
     void toStringPrintsNoValues() {
         String text = AppConfig.from(full()::get).toString();
         for (String value : full().values()) {

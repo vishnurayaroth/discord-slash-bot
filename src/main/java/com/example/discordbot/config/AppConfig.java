@@ -50,7 +50,25 @@ public final class AppConfig {
         if (!missing.isEmpty()) {
             throw new IllegalStateException("Missing required environment variables: " + String.join(", ", missing));
         }
+        checkDatabaseUrl(loaded.get("DATABASE_URL"));
         return new AppConfig(loaded);
+    }
+
+    /**
+     * Catches a common mistake early: pasting Neon's own connection string (which embeds
+     * credentials and has no "jdbc:" prefix) straight into DATABASE_URL. The message never
+     * repeats the value, since it may itself be the mistake being reported (constitution
+     * Principle IV) — a plain postgresql:// URL with credentials in it is exactly this shape.
+     */
+    private static void checkDatabaseUrl(String url) {
+        if (!url.startsWith("jdbc:")) {
+            throw new IllegalStateException(
+                    "DATABASE_URL must start with jdbc:postgresql://, not a plain postgresql:// address");
+        }
+        if (url.contains("@")) {
+            throw new IllegalStateException(
+                    "DATABASE_URL must not contain a username or password; put them in DB_USER and DB_PASSWORD instead");
+        }
     }
 
     public String applicationId() { return values.get("DISCORD_APPLICATION_ID"); }

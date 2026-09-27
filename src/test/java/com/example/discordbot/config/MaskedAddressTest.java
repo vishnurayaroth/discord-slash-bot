@@ -47,6 +47,7 @@ class MaskedAddressTest {
             env.put(name, "value-of-" + name);
         }
         env.put("MIRROR_WEBHOOK_URL", ADDRESS);
+        env.put("DATABASE_URL", "jdbc:postgresql://test-host/test-db");
         AppConfig config = AppConfig.from(env::get);
         assertEquals("https://discord.com/…abcd", config.maskedMirrorAddress());
         assertFalse(config.toString().contains("SECRETTOKEN"));
