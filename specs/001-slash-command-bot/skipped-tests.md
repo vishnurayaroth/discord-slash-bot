@@ -53,8 +53,9 @@ never recorded later), a blocked downstream (acknowledgement still returns), the
 
 | Item | Kind | Reason | Done when |
 |---|---|---|---|
-| T038 set Discord/mirror/admin variables on Render, deploy, save the Interactions Endpoint URL, send an unsigned and a wrongly signed request with curl | Deferred task / skipped live test | Needs the maintainer's Render and Discord accounts and a public deployment | Discord accepts `https://<app>/interactions` (US2 scenario 3) and forged requests get 401 with nothing in the log (US2 scenario 1, SC-002) |
-| Live check that Discord shows the private "thinking" state and no "did not respond" | Skipped live test | Needs a real Discord server | Covered by quickstart rows and T098 |
+| T038 set Discord/mirror/admin variables on Render, deploy, save the Interactions Endpoint URL | Confirmed live (2026-09-28) | — | Discord accepted `https://<app>/interactions` (US2 scenario 3); confirmed by the app then answering real commands correctly |
+| T038's forged/unsigned curl check, specifically against the live URL | Skipped live test | Not re-run live; covered by SignatureVerifierTest, InteractionHandlerTest, and the local Docker end-to-end run earlier in this session (forged, stale, and tampered requests all got 401 with nothing recorded) | Optional: `curl` the live `/interactions` with a missing or wrong signature and confirm 401 with nothing in the log |
+| Live check that Discord shows the private "thinking" state and no "did not respond" | Confirmed live (2026-09-28) | — | Observed while running `/status` and `/report` |
 | Cold-database behavior of the 2.5 s record deadline | Skipped live test | Needs Neon and the R1 measurement (T012/T013) | `Timing.RECORD_DEADLINE` confirmed or changed |
 
 ## Phase 4: User Story 1 (commands end to end)
@@ -71,8 +72,9 @@ added the real `ActionDispatcher`, `ActionRunner`, `CommandRules` and the wiring
 
 | Item | Kind | Reason | Done when |
 |---|---|---|---|
-| T050 live run of `/status`, `/report`, and `/report ... urgent` in a real Discord server, including the early-edit race and `allowed_mentions` behavior | Deferred task / skipped live test | Needs Discord, Render and Neon accounts | Quickstart US1 rows pass; results recorded in research R5 and R13 |
-| Interim setup (register commands with curl, insert the connection row) | Manual steps | Needs the bot token and database access; documented in `quickstart.md` | Commands visible in Discord; a `server_connection` row exists |
+| T050 live run of `/status`, `/report`, and `/report ... urgent` | Confirmed live (2026-09-28) | — | Private reply, mirror notification, and the HIGH PRIORITY flag all correct in a real Discord server |
+| T050's early-edit race and `allowed_mentions` behavior | Still open | Not specifically observed during the live run | Recorded in research.md R5 and R13 as remaining unknowns |
+| Interim setup (register commands with curl, insert the connection row) | Superseded | The Connect page (Phase 7) replaced this before it was needed live | — |
 
 ## Phase 5: User Story 3 (nothing lost when a downstream channel or the service hiccups)
 
@@ -195,9 +197,9 @@ each marked "deferred".
    `spike/db-probe` to GitHub, deploy it as a second Render branch or temporarily, then T011 (Neon variables,
    confirm Neon goes idle), T012 (the R1 protocol), T013 (record results and adjust `Timing.RECORD_DEADLINE`
    if needed), T014 (remove the probe).
-3. **Go live with the real code:** T038 (set the variables, save the Interactions Endpoint URL in Discord,
-   curl a forged request), then create the admin hash (quickstart, "Create the admin password hash") and set
-   `ADMIN_*` (T077).
-4. **Live checks:** T050 (commands), T088 (Connect page), T095 (Commands page), T058 (outage and restart).
+3. **Go live with the real code:** T038 is done. Create the admin hash (quickstart, "Create the admin password
+   hash") and set `ADMIN_*` (T077).
+4. **Live checks:** T050 is done. Still open: T088 (Connect page), T095 (Commands page), T058 (outage and
+   restart), and optionally the forged/unsigned curl check and the early-edit race noted above.
 5. **Finish:** T098 (full validation table and the timing row), T099 (Render log secrets check), T100 (R1
    results), T097 (rewrite `AI_NOTES.md`), T101 (final submission list), then push.
