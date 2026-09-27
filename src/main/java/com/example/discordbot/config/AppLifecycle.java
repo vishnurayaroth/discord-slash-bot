@@ -54,45 +54,54 @@ public class AppLifecycle implements ServletContextListener {
         ServletContext context = event.getServletContext();
         Clock clock = Clock.systemUTC();
 
-        database = new Database(config);
-        database.startSchemaInit();
-        InteractionStore interactions = new InteractionStore(database);
-        ActionStore actions = new ActionStore(database);
-        ServerConnectionStore connections = new ServerConnectionStore(database);
-        CommandConfigStore commandConfigs = new CommandConfigStore(database);
-        DiscordClient discord = new DiscordClient(config.botToken());
+        try {
+            database = new Database(config);
+            database.startSchemaInit();
+            InteractionStore interactions = new InteractionStore(database);
+            ActionStore actions = new ActionStore(database);
+            ServerConnectionStore connections = new ServerConnectionStore(database);
+            CommandConfigStore commandConfigs = new CommandConfigStore(database);
+            DiscordClient discord = new DiscordClient(config.botToken());
 
-        // Record step: bounded pool, so a stuck database cannot pile up unbounded work.
-        gateExecutor = new ThreadPoolExecutor(4, 4, 30, TimeUnit.SECONDS, new ArrayBlockingQueue<>(8),
-                daemonThreads("record-gate"), new ThreadPoolExecutor.AbortPolicy());
-        RecordGate gate = new RecordGate(interactions, Timing.RECORD_DEADLINE, Timing.COMMIT_GRACE, gateExecutor);
+            // Record step: bounded pool, so a stuck database cannot pile up unbounded work.
+            gateExecutor = new ThreadPoolExecutor(4, 4, 30, TimeUnit.SECONDS, new ArrayBlockingQueue<>(8),
+                    daemonThreads("record-gate"), new ThreadPoolExecutor.AbortPolicy());
+            RecordGate gate = new RecordGate(interactions, Timing.RECORD_DEADLINE, Timing.COMMIT_GRACE, gateExecutor);
 
-        // Follow-up work: reply, post and mirror run as independent timed tasks.
-        jobExecutor = new ScheduledThreadPoolExecutor(4, daemonThreads("actions"));
-        jobExecutor.setRemoveOnCancelPolicy(true);
-        ActionRunner runner = new ActionRunner(actions, interactions, connections, discord, config,
-                new RetryPolicy(), clock);
-        ActionDispatcher dispatcher = new ActionDispatcher(actions, runner, jobExecutor, Timing.FIRST_REPLY_DELAY);
-        // Retries are in-memory timers; one recovery scan at start-up finishes work accepted before a
-        // restart. No periodic polling, so an idle service lets Neon sleep (research.md R4, R5).
-        RetryScheduler retries = new RetryScheduler(actions, runner, jobExecutor, clock);
-        runner.setRetrier(retries);
-        retries.recoverWhenReady(database::schemaReady);
+            // Follow-up work: reply, post and mirror run as independent timed tasks.
+            jobExecutor = new ScheduledThreadPoolExecutor(4, daemonThreads("actions"));
+            jobExecutor.setRemoveOnCancelPolicy(true);
+            ActionRunner runner = new ActionRunner(actions, interactions, connections, discord, config,
+                    new RetryPolicy(), clock);
+            ActionDispatcher dispatcher = new ActionDispatcher(actions, runner, jobExecutor, Timing.FIRST_REPLY_DELAY);
+            // Retries are in-memory timers; one recovery scan at start-up finishes work accepted before a
+            // restart. No periodic polling, so an idle service lets Neon sleep (research.md R4, R5).
+            RetryScheduler retries = new RetryScheduler(actions, runner, jobExecutor, clock);
+            runner.setRetrier(retries);
+            retries.recoverWhenReady(database::schemaReady);
 
-        SignatureVerifier verifier = new SignatureVerifier(config.publicKeyHex(), clock);
-        InteractionHandler handler = new InteractionHandler(verifier, gate, new CommandRules(), dispatcher);
+            SignatureVerifier verifier = new SignatureVerifier(config.publicKeyHex(), clock);
+            InteractionHandler handler = new InteractionHandler(verifier, gate, new CommandRules(), dispatcher);
 
-        Services.put(context, ConfigService.class, new ConfigService(commandConfigs));
-        Services.put(context, ConnectService.class, new ConnectService(discord, connections, config.applicationId()));
-        Services.put(context, AdminAuth.class, new AdminAuth(config));
-        Services.put(context, AppConfig.class, config);
-        Services.put(context, Database.class, database);
-        Services.put(context, DiscordClient.class, discord);
-        Services.put(context, CommandConfigStore.class, commandConfigs);
-        Services.put(context, ServerConnectionStore.class, connections);
-        Services.put(context, InteractionStore.class, interactions);
-        Services.put(context, InteractionHandler.class, handler);
-        LOG.log(System.Logger.Level.INFO, "discord-bot started");
+            Services.put(context, ConfigService.class, new ConfigService(commandConfigs));
+            Services.put(context, ConnectService.class, new ConnectService(discord, connections, config.applicationId()));
+            Services.put(context, AdminAuth.class, new AdminAuth(config));
+            Services.put(context, AppConfig.class, config);
+            Services.put(context, Database.class, database);
+            Services.put(context, DiscordClient.class, discord);
+            Services.put(context, CommandConfigStore.class, commandConfigs);
+            Services.put(context, ServerConnectionStore.class, connections);
+            Services.put(context, InteractionStore.class, interactions);
+            Services.put(context, InteractionHandler.class, handler);
+            LOG.log(System.Logger.Level.INFO, "discord-bot started");
+        } catch (RuntimeException e) {
+            // Tomcat's own listener-start failure message only says "see the container log file",
+            // but that file (localhost.<date>.log) is not visible on a host with no shell access.
+            // This logger's earlier "starting" line already reached the platform's log view, so the
+            // same path is used here to make the real cause visible instead of hidden on disk.
+            LOG.log(System.Logger.Level.ERROR, "start-up failed after configuration loaded: " + e, e);
+            throw e;
+        }
     }
 
     @Override
