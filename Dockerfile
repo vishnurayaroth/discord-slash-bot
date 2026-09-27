@@ -21,12 +21,23 @@ FROM tomcat:10.1-jdk17-temurin
 # Disabling the listener (port -1) removes it entirely: Docker/Render stop the container with a
 # normal process signal, which the JVM's shutdown hook already handles, so no shutdown port is
 # needed in a container.
+# The Connector's port is a placeholder, __HTTP_PORT__, filled in at container start by
+# docker-entrypoint.sh from the real $PORT value. Render's health check targets whatever port it
+# assigns the container (seen live at 10000, not the 8080 we hardcoded before), and a dashboard
+# environment variable named PORT does not reliably change that, so the container must read the
+# real value from its own environment at startup rather than assume a fixed number.
 RUN rm -rf /usr/local/tomcat/webapps/* \
  && sed -i 's|<Server port="8005" shutdown="SHUTDOWN">|<Server port="-1" shutdown="SHUTDOWN">|' /usr/local/tomcat/conf/server.xml \
  && grep -q 'Server port="-1"' /usr/local/tomcat/conf/server.xml \
- && sed -i 's|<Connector port="8080" protocol="HTTP/1.1"|<Connector port="8080" protocol="HTTP/1.1" maxThreads="20"|' /usr/local/tomcat/conf/server.xml \
- && grep -q 'maxThreads="20"' /usr/local/tomcat/conf/server.xml
+ && sed -i 's|<Connector port="8080" protocol="HTTP/1.1"|<Connector port="__HTTP_PORT__" protocol="HTTP/1.1" maxThreads="20"|' /usr/local/tomcat/conf/server.xml \
+ && grep -q 'maxThreads="20"' /usr/local/tomcat/conf/server.xml \
+ && grep -q '__HTTP_PORT__' /usr/local/tomcat/conf/server.xml
 COPY --from=build /build/target/ROOT.war /usr/local/tomcat/webapps/ROOT.war
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 ENV CATALINA_OPTS="-Xmx256m -XX:MaxMetaspaceSize=128m -Xss512k -XX:+UseSerialGC -XX:TieredStopAtLevel=1"
-# Set PORT=8080 on Render so it finds Tomcat
+# 8080 is only the default for a local `docker run` with no PORT set; the real port at runtime
+# comes from $PORT (see docker-entrypoint.sh).
 EXPOSE 8080
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["catalina.sh", "run"]
