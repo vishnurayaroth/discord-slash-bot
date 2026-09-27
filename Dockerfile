@@ -14,7 +14,16 @@ RUN for i in 1 2 3 4 5; do \
 FROM tomcat:10.1-jdk17-temurin
 # Render's free instance has 512 MB RAM and 0.1 CPU: fewer request threads, capped heap.
 # These are starting values to tune in the first deploy (research.md R16).
+# The shutdown port (8005) has no "address" attribute in the stock image, so it binds every
+# interface, not just localhost. Render's deploy process port-scans the container and, finding
+# 8005 open, sends it an HTTP probe; Tomcat correctly refuses it ("Invalid shutdown command"),
+# and the repeated failure times out the deploy before Render tries the real port (8080).
+# Disabling the listener (port -1) removes it entirely: Docker/Render stop the container with a
+# normal process signal, which the JVM's shutdown hook already handles, so no shutdown port is
+# needed in a container.
 RUN rm -rf /usr/local/tomcat/webapps/* \
+ && sed -i 's|<Server port="8005" shutdown="SHUTDOWN">|<Server port="-1" shutdown="SHUTDOWN">|' /usr/local/tomcat/conf/server.xml \
+ && grep -q 'Server port="-1"' /usr/local/tomcat/conf/server.xml \
  && sed -i 's|<Connector port="8080" protocol="HTTP/1.1"|<Connector port="8080" protocol="HTTP/1.1" maxThreads="20"|' /usr/local/tomcat/conf/server.xml \
  && grep -q 'maxThreads="20"' /usr/local/tomcat/conf/server.xml
 COPY --from=build /build/target/ROOT.war /usr/local/tomcat/webapps/ROOT.war
