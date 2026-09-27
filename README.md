@@ -59,7 +59,7 @@ variable is missing and says which one, never its value.
 | `DISCORD_PUBLIC_KEY` | Verifies request signatures |
 | `DISCORD_BOT_TOKEN` | Authorizes bot calls |
 | `MIRROR_WEBHOOK_URL` | Second-channel destination (a Discord channel webhook). Secret. |
-| `DATABASE_URL` | JDBC address of the Neon **direct** endpoint with `sslmode=require&channelBinding=require`, no credentials in it |
+| `DATABASE_URL` | JDBC address of the Neon **direct** endpoint, for example `jdbc:postgresql://<host>/<db>?sslmode=require&channelBinding=require`. **Not** Neon's own `postgresql://user:pass@host/db` connection string — it needs the `jdbc:` prefix, and credentials go in `DB_USER`/`DB_PASSWORD` below, never in this value. The app checks this at start-up and refuses to start otherwise. |
 | `DB_USER`, `DB_PASSWORD` | Database credentials |
 | `ADMIN_USERNAME` | The single admin's sign-in name |
 | `ADMIN_PASSWORD_HASH` | BCrypt hash of the admin password. Create it with the helper in `specs/001-slash-command-bot/quickstart.md` ("Create the admin password hash"); wrap it in single quotes in a shell or `.env` because it contains `$`. |

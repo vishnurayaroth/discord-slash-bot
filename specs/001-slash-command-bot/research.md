@@ -426,6 +426,23 @@ tried the real port. The Dockerfile now disables that listener (`port="-1"` in `
 is standard practice for Tomcat in a container: Docker/Render stop it with a normal process signal,
 which the JVM's shutdown hook already handles.
 
+**Silent start-up failures (found live, 2026-09-28).** Once the port issues above were fixed, the
+container started Tomcat but the webapp itself failed with only "One or more listeners failed to
+start... Full details will be found in the appropriate container log file" — a file inside the
+container that a host with no shell access, such as Render, never shows. `AppLifecycle` now catches
+any `RuntimeException` after configuration loads and logs it, with its full stack trace, through its
+own `System.Logger` (the same one whose "starting" line already reached the console), then rethrows
+so Tomcat's failure behaviour is unchanged. This is what let the next finding be diagnosed at all.
+
+**DATABASE_URL as Neon's raw connection string (found live, 2026-09-28).** With the logging above in
+place, the real cause turned out to be `DATABASE_URL` set to Neon's own connection string
+(`postgresql://user:password@host/db?...`) instead of the JDBC form. pgjdbc requires a `jdbc:`
+prefix and rejects anything else outright, and HikariCP's resulting exception message echoes the
+whole rejected URL, including the password, into the log — a real credential briefly appeared in a
+shared log during this exercise, and was rotated. `AppConfig` now rejects a `DATABASE_URL` missing
+the `jdbc:` prefix or containing `@` (credentials) at start-up, with a message that never repeats
+the value, so this mistake fails immediately and clearly instead of leaking a secret into the log.
+
 **Risk.** With 0.1 CPU, JVM warm-up after a restart is slow; the keep-warm ping (R4) makes restarts
 rare, and R1 measures the first-request cost.
 
