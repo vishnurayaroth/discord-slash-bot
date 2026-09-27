@@ -5,7 +5,7 @@ login-protected dashboard. It is built to run unattended: it verifies every requ
 same interaction twice, does not silently lose work when a downstream service hiccups, and never exposes
 its secrets.
 
-- **Deployed URL:** `<add the Render URL after deploying>`
+- **Deployed URL:** `https://discord-slash-bot-rmqe.onrender.com`
 - **Stack:** Java 17, Jakarta Servlets and JSP on Tomcat 10.1, Maven (WAR), PostgreSQL on Neon, Docker on
   Render's free tier. No Spring, no front-end framework.
 
@@ -90,10 +90,44 @@ Postgres instead, set `TEST_DATABASE_URL`, `TEST_DATABASE_USER` and `TEST_DATABA
 5. **UptimeRobot:** add an HTTP monitor on `/health` every 5 minutes. Render's free service sleeps after 15
    idle minutes and takes about a minute to wake, which is far longer than Discord's 3-second window; the ping
    keeps it awake. `/health` never touches the database.
-6. Sign in to `/login`, open **Server**, follow the steps to add the bot, choose the server and a channel.
+6. Sign in to `/login` and connect a server from the **Server** tab — see "Using the dashboard" below.
 
 Free-tier facts behind these choices were read from the providers' documentation on 2026-09-27 and are
 recorded, with sources, in `specs/001-slash-command-bot/research.md`. Check them again before relying on them.
+
+## Using the dashboard
+
+Everything below is behind sign-in at `/login`, with a **Sign out** button always visible in the top bar.
+A session ends automatically after 30 minutes with no activity, so you're returned to sign-in if you step away.
+
+### Log
+
+The **Log** tab is the dashboard's home page and shows every command as it happens, refreshing on its own
+every few seconds — no reload needed. Each row shows the time, the member, the command, their text, whether
+it was flagged **Priority**, the **Outcome** (for example `handled`, `disabled`, `not_configured`), and, under
+**Actions**, the status of the reply, post and mirror notification: `pending` while still being attempted,
+`succeeded`, or `failed` with the reason after repeated attempts. Updates pause automatically if you leave the
+tab or the browser tab is hidden, so it never keeps polling unnecessarily.
+
+### Server
+
+The **Server** tab connects the bot to a Discord server and channel. If the bot isn't already in the server
+you want, click **Add the bot to a server** first and approve it in Discord. Back on this page, click
+**Refresh the list of servers** to see every server the bot has been added to, click one to select it, then
+pick a text channel and click **Connect and register commands**. That one click does three things: it sends a
+short test message to the channel to prove the bot can actually post there, saves the connection, and
+registers `/status` and `/report` for that server. If the bot can't post to the chosen channel (for example,
+it's missing the Send Messages permission there), nothing is saved and the page explains why — pick a
+different channel or fix the bot's permissions and try again. Connecting a different server or channel later
+simply overwrites the previous one; only one server is connected at a time.
+
+### Commands
+
+The **Commands** tab lists `/status` and `/report`, each with an **Enabled**/**Disabled** setting and its
+reply text. Change either and click **Save** — the very next time that command runs, it uses the new
+settings, with no redeploy. An empty reply text is refused and the previous one is kept. This page also shows
+the second (mirror) channel's address, but only masked (for example `https://discord.com/…abcd`) — it's a
+secret set once at deployment through an environment variable and can't be changed or fully revealed here.
 
 ## Testing it (for reviewers)
 
@@ -107,9 +141,8 @@ https://discord.com/oauth2/authorize?client_id=APPLICATION_ID&scope=bot%20applic
 **Sign in.** Open the deployed URL. The throwaway admin username is `<username supplied with the submission>`
 and its password is supplied with the submission (it is never stored in this repository).
 
-If you added the bot to your own server: open **Server**, click *Refresh the list of servers*, choose your
-server and a text channel, and click *Connect and register commands*. This replaces the previous connection (one
-server at a time). Notifications still go to the second channel configured by the maintainer.
+If you added the bot to your own server, connect it from the **Server** tab as described above. Notifications
+still go to the second channel configured by the maintainer.
 
 **Try these** and check all three places: the private reply in Discord, the second channel, and the dashboard log.
 
